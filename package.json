@@ -22,7 +22,7 @@
   "scripts": {
     "compile": "tsc -p ./",
     "watch": "tsc -w -p ./",
-    "test": "npm run compile && node --test out/test",
+    "test": "npm run compile && node --test out/test/**/*.test.js",
     "package": "vsce package"
   },
   "devDependencies": {
