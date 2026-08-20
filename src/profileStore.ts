@@ -84,7 +84,7 @@ export function renameProfile(profilesJsonPath: string, id: string, newName: str
   const data = readProfilesFile(profilesJsonPath);
   const profile = data.profiles.find((p) => p.id === id);
   if (!profile) {
-    throw new Error(`Profile ${id} not found`);
+    throw new Error(`Profile "${id}" not found`);
   }
   const others = data.profiles.filter((p) => p.id !== id);
   if (isNameTaken(others, newName)) {
@@ -98,7 +98,7 @@ export function removeProfile(profilesJsonPath: string, id: string): void {
   const data = readProfilesFile(profilesJsonPath);
   const next = data.profiles.filter((p) => p.id !== id);
   if (next.length === data.profiles.length) {
-    throw new Error(`Profile ${id} not found`);
+    throw new Error(`Profile "${id}" not found`);
   }
   writeProfilesFile(profilesJsonPath, { profiles: next });
 }

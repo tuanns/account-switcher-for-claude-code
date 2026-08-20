@@ -65,3 +65,11 @@ test('readProfilesFile recovers from a corrupt file by backing it up and startin
   assert.ok(fs.existsSync(`${p}.bak`));
   assert.equal(fs.readFileSync(`${p}.bak`, 'utf8'), '{ not valid json');
 });
+
+test('addProfile omits email/organizationName from persisted JSON when not provided', () => {
+  const p = tempProfilesJsonPath();
+  addProfile(p, { name: 'Test', dirPath: 'C:\\fake\\test' });
+  const raw = JSON.parse(fs.readFileSync(p, 'utf8'));
+  assert.equal('email' in raw.profiles[0], false);
+  assert.equal('organizationName' in raw.profiles[0], false);
+});
