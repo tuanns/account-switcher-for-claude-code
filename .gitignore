@@ -1,1 +1,4 @@
 .worktrees/
+out/
+node_modules/
+*.vsix

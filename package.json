@@ -1,0 +1,34 @@
+{
+  "name": "claude-profile-switcher",
+  "displayName": "Claude Profile Switcher",
+  "description": "Chuyen doi nhanh giua nhieu tai khoan Claude Code da dang nhap, khong can dang nhap lai.",
+  "version": "0.1.0",
+  "publisher": "local",
+  "private": true,
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": ["Other"],
+  "main": "./out/src/extension.js",
+  "activationEvents": ["onStartupFinished"],
+  "contributes": {
+    "commands": [
+      {
+        "command": "claudeProfileSwitcher.openMenu",
+        "title": "Claude Profile Switcher: Open Menu"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -w -p ./",
+    "test": "npm run compile && node --test out/test",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.90.0",
+    "typescript": "^5.6.0",
+    "@vscode/vsce": "^3.0.0"
+  }
+}
