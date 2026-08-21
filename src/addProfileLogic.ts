@@ -7,11 +7,11 @@ export function validateNewProfileName(
 ): string | undefined {
   const trimmed = name.trim();
   if (trimmed.length === 0) {
-    return 'Ten profile khong duoc de trong';
+    return 'Tên profile không được để trống';
   }
   const normalized = trimmed.toLowerCase();
   if (existingProfiles.some((p) => p.name.trim().toLowerCase() === normalized)) {
-    return `Da co profile ten "${trimmed}"`;
+    return `Đã có profile tên "${trimmed}"`;
   }
   return undefined;
 }
