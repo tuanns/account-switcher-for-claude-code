@@ -6,7 +6,7 @@ export function createStatusBarItem(commandId: string): vscode.StatusBarItem {
   const item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
   item.command = commandId;
   item.text = renderStatusBarText(undefined);
-  item.tooltip = 'Chuyen tai khoan Claude';
+  item.tooltip = 'Chuyển tài khoản Claude';
   item.show();
   return item;
 }

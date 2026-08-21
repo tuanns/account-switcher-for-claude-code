@@ -24,7 +24,7 @@ function isClaudeCliAvailable(): boolean {
 export async function runAddProfileFlow(): Promise<ClaudeProfile | undefined> {
   if (!isClaudeCliAvailable()) {
     vscode.window.showErrorMessage(
-      'Khong tim thay lenh "claude" trong PATH. Hay cai Claude Code CLI truoc (npm install -g @anthropic-ai/claude-code) roi thu lai.'
+      'Không tìm thấy lệnh "claude" trong PATH. Hãy cài Claude Code CLI trước (npm install -g @anthropic-ai/claude-code) rồi thử lại.'
     );
     return undefined;
   }
@@ -33,7 +33,7 @@ export async function runAddProfileFlow(): Promise<ClaudeProfile | undefined> {
   const existing = listProfiles(profilesJsonPath);
 
   const name = await vscode.window.showInputBox({
-    prompt: 'Ten goi nho cho tai khoan Claude moi',
+    prompt: 'Tên gợi nhớ cho tài khoản Claude mới',
     placeHolder: 'Work',
     validateInput: (value) => validateNewProfileName(value, existing),
   });
@@ -52,20 +52,33 @@ export async function runAddProfileFlow(): Promise<ClaudeProfile | undefined> {
   terminal.sendText('claude');
 
   const credentialsPath = path.join(dirPath, '.credentials.json');
-  const loggedIn = await vscode.window.withProgress(
+  const loginResult = await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: `Dang cho dang nhap cho "${name}"...`,
-      cancellable: false,
+      title: `Đang chờ đăng nhập cho "${name}"...`,
+      cancellable: true,
     },
-    () => waitForCredentialsFile(credentialsPath, LOGIN_TIMEOUT_MS)
+    (_progress, token) =>
+      Promise.race<'success' | 'timeout' | 'cancelled'>([
+        waitForCredentialsFile(credentialsPath, LOGIN_TIMEOUT_MS).then((ok) =>
+          ok ? 'success' : 'timeout'
+        ),
+        new Promise<'cancelled'>((resolve) => {
+          token.onCancellationRequested(() => resolve('cancelled'));
+        }),
+      ])
   );
 
-  if (!loggedIn) {
+  if (loginResult !== 'success') {
+    terminal.dispose();
     fs.rmSync(dirPath, { recursive: true, force: true });
-    vscode.window.showWarningMessage(
-      `Khong phat hien dang nhap thanh cong cho "${name}" (qua 5 phut). Da huy.`
-    );
+    if (loginResult === 'timeout') {
+      vscode.window.showWarningMessage(
+        `Không phát hiện đăng nhập thành công cho "${name}" (quá 5 phút). Đã huỷ.`
+      );
+    } else {
+      vscode.window.showInformationMessage(`Đã huỷ thêm tài khoản "${name}".`);
+    }
     return undefined;
   }
 
@@ -76,6 +89,6 @@ export async function runAddProfileFlow(): Promise<ClaudeProfile | undefined> {
     email: cache.email,
     organizationName: cache.organizationName,
   });
-  vscode.window.showInformationMessage(`Da them tai khoan "${name}".`);
+  vscode.window.showInformationMessage(`Đã thêm tài khoản "${name}".`);
   return profile;
 }

@@ -42,11 +42,11 @@ export function registerCommands(
         const created = await runAddProfileFlow();
         if (created) {
           const switchNow = await vscode.window.showInformationMessage(
-            `Chuyen sang "${created.name}" ngay bay gio?`,
-            'Co',
-            'De sau'
+            `Chuyển sang "${created.name}" ngay bây giờ?`,
+            'Có',
+            'Để sau'
           );
-          if (switchNow === 'Co') {
+          if (switchNow === 'Có') {
             await switchToProfile(context, statusBarItem, created.id);
           }
         }
@@ -104,7 +104,7 @@ export async function switchToProfile(
       // Extension chinh thuc co the doi id lenh; switch env van thanh cong.
     }
     vscode.window.showInformationMessage(
-      `Da chuyen sang "${profile.name}". Da mo conversation moi dung tai khoan nay.`
+      `Đã chuyển sang "${profile.name}". Đã mở conversation mới dùng tài khoản này.`
     );
   }
 }

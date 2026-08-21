@@ -20,11 +20,11 @@ export async function showMainMenu(
     description: p.email ?? p.dirPath,
     action: { kind: 'switch', profileId: p.id },
   }));
-  items.push({ label: '$(add) Them tai khoan moi...', action: { kind: 'add' } });
-  items.push({ label: '$(gear) Quan ly profile...', action: { kind: 'manage' } });
+  items.push({ label: '$(add) Thêm tài khoản mới...', action: { kind: 'add' } });
+  items.push({ label: '$(gear) Quản lý profile...', action: { kind: 'manage' } });
 
   const picked = await vscode.window.showQuickPick(items, {
-    placeHolder: 'Chon tai khoan Claude',
+    placeHolder: 'Chọn tài khoản Claude',
   });
   return picked?.action;
 }
@@ -42,16 +42,16 @@ export async function showManageMenu(profiles: ClaudeProfile[]): Promise<ManageM
   const items: ManageMenuItem[] = [];
   for (const p of profiles) {
     items.push({
-      label: `$(edit) Doi ten "${p.name}"`,
+      label: `$(edit) Đổi tên "${p.name}"`,
       action: { kind: 'rename', profileId: p.id },
     });
     items.push({
-      label: `$(trash) Xoa "${p.name}"`,
+      label: `$(trash) Xoá "${p.name}"`,
       action: { kind: 'remove', profileId: p.id },
     });
   }
   const picked = await vscode.window.showQuickPick(items, {
-    placeHolder: 'Quan ly profile',
+    placeHolder: 'Quản lý profile',
   });
   return picked?.action;
 }
