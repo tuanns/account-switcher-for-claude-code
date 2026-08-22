@@ -52,33 +52,23 @@ export async function runAddProfileFlow(): Promise<ClaudeProfile | undefined> {
   terminal.sendText('claude');
 
   const credentialsPath = path.join(dirPath, '.credentials.json');
-  const loginResult = await vscode.window.withProgress(
+  // ProgressLocation.Window renders in the status bar instead of a floating
+  // notification, so it never covers the login terminal (the terminal shows
+  // the login URL/instructions the user needs to see and interact with).
+  const loggedIn = await vscode.window.withProgress(
     {
-      location: vscode.ProgressLocation.Notification,
+      location: vscode.ProgressLocation.Window,
       title: `Đang chờ đăng nhập cho "${name}"...`,
-      cancellable: true,
     },
-    (_progress, token) =>
-      Promise.race<'success' | 'timeout' | 'cancelled'>([
-        waitForCredentialsFile(credentialsPath, LOGIN_TIMEOUT_MS).then((ok) =>
-          ok ? 'success' : 'timeout'
-        ),
-        new Promise<'cancelled'>((resolve) => {
-          token.onCancellationRequested(() => resolve('cancelled'));
-        }),
-      ])
+    () => waitForCredentialsFile(credentialsPath, LOGIN_TIMEOUT_MS)
   );
 
-  if (loginResult !== 'success') {
+  if (!loggedIn) {
     terminal.dispose();
     fs.rmSync(dirPath, { recursive: true, force: true });
-    if (loginResult === 'timeout') {
-      vscode.window.showWarningMessage(
-        `Không phát hiện đăng nhập thành công cho "${name}" (quá 5 phút). Đã huỷ.`
-      );
-    } else {
-      vscode.window.showInformationMessage(`Đã huỷ thêm tài khoản "${name}".`);
-    }
+    vscode.window.showWarningMessage(
+      `Không phát hiện đăng nhập thành công cho "${name}" (quá 5 phút). Đã huỷ.`
+    );
     return undefined;
   }
 
