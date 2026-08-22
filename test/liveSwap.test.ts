@@ -42,13 +42,16 @@ test('swapCredentialsIntoLive merges only oauthAccount into an existing .claude.
   assert.deepEqual(dst.projects, { keep: 'me' });
 });
 
-test('swapCredentialsIntoLive works when the live dir has no .claude.json yet', () => {
+test('swapCredentialsIntoLive copies the whole .claude.json (incl. projects) when the live dir has none yet', () => {
   const sourceDir = tempDir('cps-swap-src-');
   const liveDir = path.join(tempDir('cps-swap-live-'), 'fresh-live');
   fs.writeFileSync(path.join(sourceDir, '.credentials.json'), '{"token":"abc"}', 'utf8');
   fs.writeFileSync(
     path.join(sourceDir, '.claude.json'),
-    JSON.stringify({ oauthAccount: { emailAddress: 'new@example.com' } }),
+    JSON.stringify({
+      oauthAccount: { emailAddress: 'new@example.com' },
+      projects: { 'C:\\repo': { history: ['old session'] } },
+    }),
     'utf8'
   );
 
@@ -56,6 +59,17 @@ test('swapCredentialsIntoLive works when the live dir has no .claude.json yet', 
 
   const dst = JSON.parse(fs.readFileSync(path.join(liveDir, '.claude.json'), 'utf8'));
   assert.equal(dst.oauthAccount.emailAddress, 'new@example.com');
+  assert.deepEqual(dst.projects, { 'C:\\repo': { history: ['old session'] } });
+});
+
+test('swapCredentialsIntoLive is a no-op when the live dir has no .claude.json yet and the source has none either', () => {
+  const sourceDir = tempDir('cps-swap-src-');
+  const liveDir = path.join(tempDir('cps-swap-live-'), 'fresh-live');
+  fs.writeFileSync(path.join(sourceDir, '.credentials.json'), '{"token":"abc"}', 'utf8');
+
+  swapCredentialsIntoLive(sourceDir, liveDir);
+
+  assert.equal(fs.existsSync(path.join(liveDir, '.claude.json')), false);
 });
 
 test('swapCredentialsIntoLive throws a clear error when the source has no credentials file', () => {

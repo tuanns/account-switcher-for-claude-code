@@ -3,12 +3,18 @@ import * as path from 'path';
 
 /**
  * Overwrites `<liveDir>/.credentials.json` with the credentials from
- * `<sourceDir>/.credentials.json`, and merges just the `oauthAccount` field
- * from `<sourceDir>/.claude.json` into `<liveDir>/.claude.json` (creating it
- * if missing). Every other key already present in the live dir's
- * `.claude.json` (projects, mcpServers, session cache, ...) is left
- * untouched, since a running conversation's project/session history lives
- * there and must not be wiped out by an account swap.
+ * `<sourceDir>/.credentials.json`.
+ *
+ * For `<liveDir>/.claude.json`:
+ * - If it doesn't exist yet (first time this live dir is ever seeded, e.g.
+ *   first-run migration), the ENTIRE `<sourceDir>/.claude.json` is copied
+ *   over as-is, so any pre-existing project/session history the source
+ *   profile already had (most commonly the user's original `~/.claude`)
+ *   carries into the live dir instead of being silently dropped.
+ * - If it already exists, only the `oauthAccount` field is merged in. Every
+ *   other key already present (projects, mcpServers, session cache, ...) is
+ *   left untouched, since a running conversation's project/session history
+ *   lives there and must not be wiped out by an account swap.
  */
 export function swapCredentialsIntoLive(sourceDir: string, liveDir: string): void {
   const sourceCredentialsPath = path.join(sourceDir, '.credentials.json');
@@ -21,6 +27,15 @@ export function swapCredentialsIntoLive(sourceDir: string, liveDir: string): voi
   fs.copyFileSync(sourceCredentialsPath, liveCredentialsPath);
 
   const sourceConfigPath = path.join(sourceDir, '.claude.json');
+  const liveConfigPath = path.join(liveDir, '.claude.json');
+
+  if (!fs.existsSync(liveConfigPath)) {
+    if (fs.existsSync(sourceConfigPath)) {
+      fs.copyFileSync(sourceConfigPath, liveConfigPath);
+    }
+    return;
+  }
+
   let sourceOAuthAccount: unknown;
   try {
     const sourceConfig = JSON.parse(fs.readFileSync(sourceConfigPath, 'utf8'));
@@ -32,7 +47,6 @@ export function swapCredentialsIntoLive(sourceDir: string, liveDir: string): voi
     return;
   }
 
-  const liveConfigPath = path.join(liveDir, '.claude.json');
   let liveConfig: Record<string, unknown> = {};
   try {
     liveConfig = JSON.parse(fs.readFileSync(liveConfigPath, 'utf8'));

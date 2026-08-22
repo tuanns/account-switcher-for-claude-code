@@ -2,7 +2,7 @@
   "name": "claude-profile-switcher",
   "displayName": "Claude Profile Switcher",
   "description": "Chuyen doi nhanh giua nhieu tai khoan Claude Code da dang nhap, khong can dang nhap lai.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "local",
   "private": true,
   "engines": {
