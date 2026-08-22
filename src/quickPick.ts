@@ -2,7 +2,8 @@ import * as vscode from 'vscode';
 import type { ClaudeProfile } from './profileStore';
 
 export type MainMenuResult =
-  | { kind: 'switch'; profileId: string }
+  | { kind: 'switchLive'; profileId: string }
+  | { kind: 'pinMenu' }
   | { kind: 'add' }
   | { kind: 'manage' }
   | undefined;
@@ -18,13 +19,39 @@ export async function showMainMenu(
   const items: MenuItem[] = profiles.map((p) => ({
     label: p.id === activeProfileId ? `$(check) ${p.name}` : p.name,
     description: p.email ?? p.dirPath,
-    action: { kind: 'switch', profileId: p.id },
+    action: { kind: 'switchLive', profileId: p.id },
   }));
+  items.push({
+    label: '$(window) Mở cửa sổ độc lập với profile khác...',
+    detail: 'Chỉ cửa sổ này dùng profile riêng, không ảnh hưởng conversation/cửa sổ khác',
+    action: { kind: 'pinMenu' },
+  });
   items.push({ label: '$(add) Thêm tài khoản mới...', action: { kind: 'add' } });
   items.push({ label: '$(gear) Quản lý profile...', action: { kind: 'manage' } });
 
   const picked = await vscode.window.showQuickPick(items, {
-    placeHolder: 'Chọn tài khoản Claude',
+    placeHolder: 'Chọn tài khoản Claude (giữ nguyên conversation hiện tại)',
+  });
+  return picked?.action;
+}
+
+export type PinMenuResult = { kind: 'switchPinned'; profileId: string } | undefined;
+
+interface PinMenuItem extends vscode.QuickPickItem {
+  action: PinMenuResult;
+}
+
+export async function showPinMenu(
+  profiles: ClaudeProfile[],
+  pinnedProfileId: string | undefined
+): Promise<PinMenuResult> {
+  const items: PinMenuItem[] = profiles.map((p) => ({
+    label: p.id === pinnedProfileId ? `$(check) ${p.name}` : p.name,
+    description: p.email ?? p.dirPath,
+    action: { kind: 'switchPinned', profileId: p.id },
+  }));
+  const picked = await vscode.window.showQuickPick(items, {
+    placeHolder: 'Cửa sổ này dùng riêng profile nào? (sẽ mở conversation mới)',
   });
   return picked?.action;
 }

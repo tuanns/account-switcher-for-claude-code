@@ -10,6 +10,17 @@ export function getProfilesJsonPath(): string {
   return path.join(getProfilesRoot(), 'profiles.json');
 }
 
+/**
+ * The one fixed "live" config directory that windows use by default (not
+ * pinned to a specific profile's own directory). Switching a profile "live"
+ * overwrites this directory's credentials in place, so an already-running
+ * conversation whose process is bound to this directory picks up the new
+ * account without needing a new conversation.
+ */
+export function getLiveDir(): string {
+  return path.join(getProfilesRoot(), '_live');
+}
+
 export function slugify(name: string): string {
   const slug = name
     .toLowerCase()

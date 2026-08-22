@@ -4,7 +4,7 @@ import * as path from 'path';
 import { execFileSync } from 'child_process';
 import { addProfile, listProfiles } from './profileStore';
 import type { ClaudeProfile } from './profileStore';
-import { getProfilesJsonPath, getUniqueProfileDirPath } from './paths';
+import { getProfilesJsonPath, getUniqueProfileDirPath, getLiveDir } from './paths';
 import { validateNewProfileName, waitForCredentialsFile } from './addProfileLogic';
 import { readOAuthAccountCache } from './migration';
 import { applyEnvironmentVariableCollection } from './envCollection';
@@ -24,7 +24,8 @@ function isClaudeCliAvailable(): boolean {
 
 export async function runAddProfileFlow(
   context: vscode.ExtensionContext,
-  activeProfile: ClaudeProfile | undefined
+  activeProfile: ClaudeProfile | undefined,
+  isPinned: boolean
 ): Promise<ClaudeProfile | undefined> {
   if (!isClaudeCliAvailable()) {
     vscode.window.showErrorMessage(
@@ -69,9 +70,15 @@ export async function runAddProfileFlow(
   // Restore the collection to the real active profile shortly after, so any
   // other terminal opened while the user is logging in keeps using the
   // correct account. The delay gives VSCode time to finish spawning this
-  // terminal's process with the new-profile value applied above.
+  // terminal's process with the new-profile value applied above. When this
+  // window isn't pinned, the "real" value is the shared `_live` dir (with
+  // the active profile's identity already swapped into it), not the active
+  // profile's own directory.
   setTimeout(() => {
-    applyEnvironmentVariableCollection(context, activeProfile);
+    const restoreTarget = activeProfile
+      ? { ...activeProfile, dirPath: isPinned ? activeProfile.dirPath : getLiveDir() }
+      : undefined;
+    applyEnvironmentVariableCollection(context, restoreTarget);
   }, 500);
 
   const credentialsPath = path.join(dirPath, '.credentials.json');

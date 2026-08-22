@@ -1,13 +1,14 @@
 import * as vscode from 'vscode';
-import { getProfilesJsonPath } from './paths';
+import { getProfilesJsonPath, getLiveDir } from './paths';
 import { findProfile, listProfiles } from './profileStore';
-import { getActiveProfileId, setActiveProfileId } from './activeProfileState';
+import { getActiveProfileId, setActiveProfileId, getIsPinned, setIsPinned } from './activeProfileState';
 import { applyProfileEnvironment } from './envApply';
 import { applyEnvironmentVariableCollection } from './envCollection';
 import { refreshStatusBar } from './statusBar';
-import { showMainMenu, showManageMenu } from './quickPick';
+import { showMainMenu, showManageMenu, showPinMenu } from './quickPick';
 import { runAddProfileFlow } from './addProfileFlow';
 import { runRenameFlow, runRemoveFlow } from './manageProfilesFlow';
+import { swapCredentialsIntoLive } from './liveSwap';
 
 let isBusy = false;
 
@@ -36,11 +37,16 @@ export function registerCommands(
       if (!result) {
         return;
       }
-      if (result.kind === 'switch') {
-        await switchToProfile(context, statusBarItem, result.profileId);
+      if (result.kind === 'switchLive') {
+        await switchLive(context, statusBarItem, result.profileId);
+      } else if (result.kind === 'pinMenu') {
+        const pinResult = await showPinMenu(profiles, getIsPinned(context) ? activeId : undefined);
+        if (pinResult) {
+          await switchPinned(context, statusBarItem, pinResult.profileId);
+        }
       } else if (result.kind === 'add') {
         const activeProfile = activeId ? findProfile(profilesJsonPath, activeId) : undefined;
-        const created = await runAddProfileFlow(context, activeProfile);
+        const created = await runAddProfileFlow(context, activeProfile, getIsPinned(context));
         if (created) {
           const switchNow = await vscode.window.showInformationMessage(
             `Chuyển sang "${created.name}" ngay bây giờ?`,
@@ -48,7 +54,7 @@ export function registerCommands(
             'Để sau'
           );
           if (switchNow === 'Có') {
-            await switchToProfile(context, statusBarItem, created.id);
+            await switchLive(context, statusBarItem, created.id);
           }
         }
       } else if (result.kind === 'manage') {
@@ -78,14 +84,54 @@ async function handleManageMenu(
     const { removed } = await runRemoveFlow(result.profileId);
     if (removed && result.profileId === activeId) {
       const remaining = listProfiles(profilesJsonPath);
-      await switchToProfile(context, statusBarItem, remaining[0]?.id);
+      await switchLive(context, statusBarItem, remaining[0]?.id);
     } else {
       refreshActiveDisplay(context, statusBarItem);
     }
   }
 }
 
-export async function switchToProfile(
+/**
+ * "Giữ conversation" switch: overwrites the shared `_live` directory's
+ * credentials with the chosen profile's, so any window/conversation
+ * currently pointed at `_live` (i.e. not pinned to its own directory) picks
+ * up the new account without needing a new conversation. Does NOT trigger a
+ * new-conversation command — that's the whole point of this mode.
+ */
+export async function switchLive(
+  context: vscode.ExtensionContext,
+  statusBarItem: vscode.StatusBarItem,
+  profileId: string | undefined
+): Promise<void> {
+  const profilesJsonPath = getProfilesJsonPath();
+  const profile = profileId ? findProfile(profilesJsonPath, profileId) : undefined;
+  const liveDir = getLiveDir();
+
+  if (profile) {
+    swapCredentialsIntoLive(profile.dirPath, liveDir);
+  }
+
+  await setIsPinned(context, false);
+  await setActiveProfileId(context, profile?.id);
+  applyProfileEnvironment(profile ? { ...profile, dirPath: liveDir } : undefined);
+  applyEnvironmentVariableCollection(context, profile ? { ...profile, dirPath: liveDir } : undefined);
+  refreshStatusBar(statusBarItem, profile);
+
+  if (profile) {
+    vscode.window.showInformationMessage(
+      `Đã chuyển sang "${profile.name}". Conversation đang mở tiếp tục dùng tài khoản này.`
+    );
+  }
+}
+
+/**
+ * "Cửa sổ độc lập" switch: points THIS window's own directory directly at
+ * the chosen profile's own directory (the original per-window isolation
+ * mechanism), so other windows/`_live` are unaffected. Since this is a
+ * genuinely different directory, a running conversation can't pick it up in
+ * place, so a new conversation is opened.
+ */
+export async function switchPinned(
   context: vscode.ExtensionContext,
   statusBarItem: vscode.StatusBarItem,
   profileId: string | undefined
@@ -93,9 +139,10 @@ export async function switchToProfile(
   const profilesJsonPath = getProfilesJsonPath();
   const profile = profileId ? findProfile(profilesJsonPath, profileId) : undefined;
 
+  await setIsPinned(context, true);
+  await setActiveProfileId(context, profile?.id);
   applyProfileEnvironment(profile);
   applyEnvironmentVariableCollection(context, profile);
-  await setActiveProfileId(context, profile?.id);
   refreshStatusBar(statusBarItem, profile);
 
   if (profile) {
@@ -105,7 +152,7 @@ export async function switchToProfile(
       // Extension chinh thuc co the doi id lenh; switch env van thanh cong.
     }
     vscode.window.showInformationMessage(
-      `Đã chuyển sang "${profile.name}". Đã mở conversation mới dùng tài khoản này.`
+      `Cửa sổ này dùng riêng "${profile.name}". Đã mở conversation mới dùng tài khoản này.`
     );
   }
 }
