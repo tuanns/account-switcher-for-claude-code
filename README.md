@@ -10,9 +10,12 @@ không cần đăng nhập lại.
    `claude`, hoàn tất OAuth login qua trình duyệt như bình thường).
 3. Có 2 cách switch, tuỳ nhu cầu:
    - **Bấm thẳng vào tên profile trong menu chính** → "giữ conversation": chỉ đổi
-     credentials, conversation đang mở tiếp tục dùng được ngay, không cần mở mới.
-     Lưu ý: cách này dùng chung 1 khe "đang chạy" cho mọi cửa sổ chưa pin — switch
-     ở cửa sổ này thì cửa sổ khác (chưa pin) cũng đổi theo.
+     credentials dùng chung, **conversation MỚI** mở sau đó (ở cửa sổ này hoặc bất
+     kỳ cửa sổ nào khác chưa pin) sẽ dùng tài khoản mới. Lưu ý quan trọng: cách
+     này **không** đổi được tài khoản của conversation đang mở sẵn — subprocess
+     `claude` đứng sau nó đã đọc `CLAUDE_CONFIG_DIR` một lần lúc mở và giữ nguyên
+     suốt vòng đời, ghi đè `_live` trên đĩa sau đó không có tác dụng với nó. Muốn
+     thấy tài khoản mới, phải mở conversation mới.
    - **"Mở cửa sổ độc lập với profile khác..."** → chỉ cửa sổ hiện tại dùng riêng
      profile đó, tách khỏi cửa sổ khác, nhưng phải mở conversation mới.
 4. Muốn chạy song song nhiều tài khoản ở nhiều cửa sổ độc lập với nhau: dùng mục

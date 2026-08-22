@@ -94,10 +94,20 @@ async function handleManageMenu(
 
 /**
  * "Giữ conversation" switch: overwrites the shared `_live` directory's
- * credentials with the chosen profile's, so any window/conversation
- * currently pointed at `_live` (i.e. not pinned to its own directory) picks
- * up the new account without needing a new conversation. Does NOT trigger a
- * new-conversation command — that's the whole point of this mode.
+ * credentials with the chosen profile's, so any *new* conversation started
+ * in a window pointed at `_live` (i.e. not pinned to its own directory) uses
+ * the new account.
+ *
+ * IMPORTANT (verified 2026-08-23): this does NOT retroactively affect a
+ * conversation already open at the time of the switch. The `claude`
+ * subprocess backing an open conversation is spawned once and keeps
+ * whatever `CLAUDE_CONFIG_DIR` it read at spawn time for its whole
+ * lifetime — rewriting `_live` on disk afterwards has no effect on it.
+ * Only the *next* conversation opened in this (or any other unpinned)
+ * window actually picks up the new account. Does NOT trigger a
+ * new-conversation command itself — the currently open one is left alone
+ * on purpose, in case the user wants to keep working in it under the old
+ * account while future conversations use the new one.
  */
 export async function switchLive(
   context: vscode.ExtensionContext,
@@ -125,7 +135,7 @@ export async function switchLive(
 
   if (profile) {
     vscode.window.showInformationMessage(
-      `Đã chuyển sang "${profile.name}". Conversation đang mở tiếp tục dùng tài khoản này.`
+      `Đã chuyển sang "${profile.name}". Cuộc trò chuyện ĐANG MỞ vẫn dùng tài khoản cũ — mở cuộc trò chuyện mới để dùng "${profile.name}".`
     );
   }
 }
