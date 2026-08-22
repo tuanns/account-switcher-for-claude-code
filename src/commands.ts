@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { getProfilesJsonPath, getLiveDir, getSharedProjectsDir } from './paths';
 import { findProfile, listProfiles } from './profileStore';
+import { refreshProfilesAccountCache } from './accountCache';
 import { getActiveProfileId, setActiveProfileId, getIsPinned, setIsPinned } from './activeProfileState';
 import { applyProfileEnvironment } from './envApply';
 import { applyEnvironmentVariableCollection } from './envCollection';
@@ -32,7 +33,7 @@ export function registerCommands(
   const openMenu = vscode.commands.registerCommand('claudeProfileSwitcher.openMenu', () =>
     withBusyGuard(async () => {
       const profilesJsonPath = getProfilesJsonPath();
-      const profiles = listProfiles(profilesJsonPath);
+      const profiles = refreshProfilesAccountCache(profilesJsonPath);
       const activeId = getActiveProfileId(context);
       const result = await showMainMenu(profiles, activeId);
       if (!result) {
@@ -72,7 +73,7 @@ async function handleManageMenu(
   statusBarItem: vscode.StatusBarItem
 ): Promise<void> {
   const profilesJsonPath = getProfilesJsonPath();
-  const profiles = listProfiles(profilesJsonPath);
+  const profiles = refreshProfilesAccountCache(profilesJsonPath);
   const result = await showManageMenu(profiles);
   if (!result) {
     return;
