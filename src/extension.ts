@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getProfilesJsonPath, getLiveDir } from './paths';
+import { getProfilesJsonPath, getLiveDir, getSharedProjectsDir } from './paths';
 import { findProfile } from './profileStore';
 import { tryFirstRunMigration } from './migration';
 import { getActiveProfileId, setActiveProfileId, getIsPinned } from './activeProfileState';
@@ -8,6 +8,7 @@ import { applyEnvironmentVariableCollection } from './envCollection';
 import { createStatusBarItem, refreshStatusBar } from './statusBar';
 import { registerCommands } from './commands';
 import { swapCredentialsIntoLive } from './liveSwap';
+import { ensureProjectsShared } from './sharedProjects';
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const profilesJsonPath = getProfilesJsonPath();
@@ -35,6 +36,19 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const effectiveProfile = activeProfile
     ? { ...activeProfile, dirPath: isPinned ? activeProfile.dirPath : getLiveDir() }
     : undefined;
+
+  if (effectiveProfile) {
+    // Lazily upgrade this directory's `projects/` to the shared junction on
+    // every activation, so profiles/​the `_live` dir created before this
+    // feature existed (or last touched by an older version) get migrated
+    // the next time they're actually used, without a disruptive upfront
+    // migration of every profile at once.
+    try {
+      ensureProjectsShared(effectiveProfile.dirPath, getSharedProjectsDir());
+    } catch {
+      // Best-effort; a later switch retries it.
+    }
+  }
 
   applyProfileEnvironment(effectiveProfile);
   applyEnvironmentVariableCollection(context, effectiveProfile);

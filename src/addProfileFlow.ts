@@ -4,10 +4,11 @@ import * as path from 'path';
 import { execFileSync } from 'child_process';
 import { addProfile, listProfiles } from './profileStore';
 import type { ClaudeProfile } from './profileStore';
-import { getProfilesJsonPath, getUniqueProfileDirPath, getLiveDir } from './paths';
+import { getProfilesJsonPath, getUniqueProfileDirPath, getLiveDir, getSharedProjectsDir } from './paths';
 import { validateNewProfileName, waitForCredentialsFile } from './addProfileLogic';
 import { readOAuthAccountCache } from './migration';
 import { applyEnvironmentVariableCollection } from './envCollection';
+import { ensureProjectsShared } from './sharedProjects';
 
 const LOGIN_TIMEOUT_MS = 5 * 60 * 1000;
 
@@ -48,6 +49,10 @@ export async function runAddProfileFlow(
 
   const dirPath = getUniqueProfileDirPath(name);
   fs.mkdirSync(dirPath, { recursive: true });
+  // Junction `projects/` to the shared dir from the very start, so this
+  // profile's conversation history is visible/resumable under every other
+  // profile too, instead of starting its own separate history tree.
+  ensureProjectsShared(dirPath, getSharedProjectsDir());
 
   // VSCode applies context.environmentVariableCollection to newly created
   // terminals AFTER (and overriding) the `env` option passed to

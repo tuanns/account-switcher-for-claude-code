@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getProfilesJsonPath, getLiveDir } from './paths';
+import { getProfilesJsonPath, getLiveDir, getSharedProjectsDir } from './paths';
 import { findProfile, listProfiles } from './profileStore';
 import { getActiveProfileId, setActiveProfileId, getIsPinned, setIsPinned } from './activeProfileState';
 import { applyProfileEnvironment } from './envApply';
@@ -9,6 +9,7 @@ import { showMainMenu, showManageMenu, showPinMenu } from './quickPick';
 import { runAddProfileFlow } from './addProfileFlow';
 import { runRenameFlow, runRemoveFlow } from './manageProfilesFlow';
 import { swapCredentialsIntoLive } from './liveSwap';
+import { ensureProjectsShared } from './sharedProjects';
 
 let isBusy = false;
 
@@ -110,6 +111,11 @@ export async function switchLive(
   if (profile) {
     swapCredentialsIntoLive(profile.dirPath, liveDir);
   }
+  try {
+    ensureProjectsShared(liveDir, getSharedProjectsDir());
+  } catch {
+    // Best-effort; a later switch retries it.
+  }
 
   await setIsPinned(context, false);
   await setActiveProfileId(context, profile?.id);
@@ -138,6 +144,14 @@ export async function switchPinned(
 ): Promise<void> {
   const profilesJsonPath = getProfilesJsonPath();
   const profile = profileId ? findProfile(profilesJsonPath, profileId) : undefined;
+
+  if (profile) {
+    try {
+      ensureProjectsShared(profile.dirPath, getSharedProjectsDir());
+    } catch {
+      // Best-effort; a later switch retries it.
+    }
+  }
 
   await setIsPinned(context, true);
   await setActiveProfileId(context, profile?.id);
