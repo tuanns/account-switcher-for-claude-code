@@ -7,6 +7,7 @@ import type { ClaudeProfile } from './profileStore';
 import { getProfilesJsonPath, getUniqueProfileDirPath } from './paths';
 import { validateNewProfileName, waitForCredentialsFile } from './addProfileLogic';
 import { readOAuthAccountCache } from './migration';
+import { applyEnvironmentVariableCollection } from './envCollection';
 
 const LOGIN_TIMEOUT_MS = 5 * 60 * 1000;
 
@@ -21,7 +22,10 @@ function isClaudeCliAvailable(): boolean {
   }
 }
 
-export async function runAddProfileFlow(): Promise<ClaudeProfile | undefined> {
+export async function runAddProfileFlow(
+  context: vscode.ExtensionContext,
+  activeProfile: ClaudeProfile | undefined
+): Promise<ClaudeProfile | undefined> {
   if (!isClaudeCliAvailable()) {
     vscode.window.showErrorMessage(
       'Không tìm thấy lệnh "claude" trong PATH. Hãy cài Claude Code CLI trước (npm install -g @anthropic-ai/claude-code) rồi thử lại.'
@@ -44,12 +48,31 @@ export async function runAddProfileFlow(): Promise<ClaudeProfile | undefined> {
   const dirPath = getUniqueProfileDirPath(name);
   fs.mkdirSync(dirPath, { recursive: true });
 
+  // VSCode applies context.environmentVariableCollection to newly created
+  // terminals AFTER (and overriding) the `env` option passed to
+  // createTerminal below — a documented VSCode quirk, not a bug on our side:
+  // https://github.com/microsoft/vscode/issues/96295. Without this, the
+  // login terminal would silently inherit CLAUDE_CONFIG_DIR from whichever
+  // profile is currently active instead of this new profile's directory,
+  // so `claude login` would write credentials to the wrong place and our
+  // wait-for-credentials-file poll below would time out even after a
+  // successful login.
+  context.environmentVariableCollection.replace('CLAUDE_CONFIG_DIR', dirPath);
+
   const terminal = vscode.window.createTerminal({
     name: `Claude Login: ${name}`,
     env: { CLAUDE_CONFIG_DIR: dirPath },
   });
   terminal.show();
   terminal.sendText('claude');
+
+  // Restore the collection to the real active profile shortly after, so any
+  // other terminal opened while the user is logging in keeps using the
+  // correct account. The delay gives VSCode time to finish spawning this
+  // terminal's process with the new-profile value applied above.
+  setTimeout(() => {
+    applyEnvironmentVariableCollection(context, activeProfile);
+  }, 500);
 
   const credentialsPath = path.join(dirPath, '.credentials.json');
   // ProgressLocation.Window renders in the status bar instead of a floating

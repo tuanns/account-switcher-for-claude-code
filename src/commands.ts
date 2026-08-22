@@ -39,7 +39,8 @@ export function registerCommands(
       if (result.kind === 'switch') {
         await switchToProfile(context, statusBarItem, result.profileId);
       } else if (result.kind === 'add') {
-        const created = await runAddProfileFlow();
+        const activeProfile = activeId ? findProfile(profilesJsonPath, activeId) : undefined;
+        const created = await runAddProfileFlow(context, activeProfile);
         if (created) {
           const switchNow = await vscode.window.showInformationMessage(
             `Chuyển sang "${created.name}" ngay bây giờ?`,
