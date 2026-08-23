@@ -25,5 +25,9 @@
   "No successful login detected for \"{0}\" (over 5 minutes). Cancelled.": "Không phát hiện đăng nhập thành công cho \"{0}\" (quá 5 phút). Đã huỷ.",
   "Added account \"{0}\".": "Đã thêm tài khoản \"{0}\".",
   "Profile name cannot be empty": "Tên profile không được để trống",
-  "A profile named \"{0}\" already exists": "Đã có profile tên \"{0}\""
+  "A profile named \"{0}\" already exists": "Đã có profile tên \"{0}\"",
+  "Log in again": "Đăng nhập lại",
+  "\"{0}\"'s login session was lost (its token got cleared) — log in again to keep using it.": "Phiên đăng nhập của \"{0}\" đã mất (token bị xoá) — đăng nhập lại để tiếp tục dùng.",
+  "Claude Login: {0}": "Đăng nhập Claude: {0}",
+  "Logged in again for \"{0}\".": "Đã đăng nhập lại cho \"{0}\"."
 }

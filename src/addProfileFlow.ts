@@ -1,16 +1,13 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import * as path from 'path';
 import { execFileSync } from 'child_process';
 import { addProfile, listProfiles } from './profileStore';
 import type { ClaudeProfile } from './profileStore';
-import { getProfilesJsonPath, getUniqueProfileDirPath, getLiveDir, getSharedProjectsDir } from './paths';
-import { validateNewProfileName, waitForCredentialsFile } from './addProfileLogic';
+import { getProfilesJsonPath, getUniqueProfileDirPath, getSharedProjectsDir } from './paths';
+import { validateNewProfileName } from './addProfileLogic';
 import { readOAuthAccountCache } from './migration';
-import { applyEnvironmentVariableCollection } from './envCollection';
 import { ensureProjectsShared } from './sharedProjects';
-
-const LOGIN_TIMEOUT_MS = 5 * 60 * 1000;
+import { openLoginTerminalAndWaitForCredentials } from './loginTerminal';
 
 function isClaudeCliAvailable(): boolean {
   try {
@@ -56,49 +53,10 @@ export async function runAddProfileFlow(
   // profile too, instead of starting its own separate history tree.
   ensureProjectsShared(dirPath, getSharedProjectsDir());
 
-  // VSCode applies context.environmentVariableCollection to newly created
-  // terminals AFTER (and overriding) the `env` option passed to
-  // createTerminal below — a documented VSCode quirk, not a bug on our side:
-  // https://github.com/microsoft/vscode/issues/96295. Without this, the
-  // login terminal would silently inherit CLAUDE_CONFIG_DIR from whichever
-  // profile is currently active instead of this new profile's directory,
-  // so `claude login` would write credentials to the wrong place and our
-  // wait-for-credentials-file poll below would time out even after a
-  // successful login.
-  context.environmentVariableCollection.replace('CLAUDE_CONFIG_DIR', dirPath);
-
-  const terminal = vscode.window.createTerminal({
-    name: `Claude Login: ${name}`,
-    env: { CLAUDE_CONFIG_DIR: dirPath },
+  const { loggedIn, terminal } = await openLoginTerminalAndWaitForCredentials(context, dirPath, name, {
+    activeProfile,
+    isPinned,
   });
-  terminal.show();
-  terminal.sendText('claude');
-
-  // Restore the collection to the real active profile shortly after, so any
-  // other terminal opened while the user is logging in keeps using the
-  // correct account. The delay gives VSCode time to finish spawning this
-  // terminal's process with the new-profile value applied above. When this
-  // window isn't pinned, the "real" value is the shared `_live` dir (with
-  // the active profile's identity already swapped into it), not the active
-  // profile's own directory.
-  setTimeout(() => {
-    const restoreTarget = activeProfile
-      ? { ...activeProfile, dirPath: isPinned ? activeProfile.dirPath : getLiveDir() }
-      : undefined;
-    applyEnvironmentVariableCollection(context, restoreTarget);
-  }, 500);
-
-  const credentialsPath = path.join(dirPath, '.credentials.json');
-  // ProgressLocation.Window renders in the status bar instead of a floating
-  // notification, so it never covers the login terminal (the terminal shows
-  // the login URL/instructions the user needs to see and interact with).
-  const loggedIn = await vscode.window.withProgress(
-    {
-      location: vscode.ProgressLocation.Window,
-      title: vscode.l10n.t('Waiting for login for "{0}"...', name),
-    },
-    () => waitForCredentialsFile(credentialsPath, LOGIN_TIMEOUT_MS)
-  );
 
   if (!loggedIn) {
     terminal.dispose();

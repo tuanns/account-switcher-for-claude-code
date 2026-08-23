@@ -11,6 +11,8 @@ import { runAddProfileFlow } from './addProfileFlow';
 import { runRenameFlow, runRemoveFlow } from './manageProfilesFlow';
 import { swapCredentialsIntoLive } from './liveSwap';
 import { ensureProjectsShared } from './sharedProjects';
+import { isCredentialsWiped } from './credentialsHealth';
+import { runReLoginFlow } from './reLoginFlow';
 
 let isBusy = false;
 
@@ -35,6 +37,29 @@ export function registerCommands(
       const profilesJsonPath = getProfilesJsonPath();
       const profiles = refreshProfilesAccountCache(profilesJsonPath);
       const activeId = getActiveProfileId(context);
+
+      // Proactively surface a wiped-token profile (see credentialsHealth.ts)
+      // instead of letting the user discover it mid-conversation as a
+      // confusing auth error. Checked on every menu open since it's just a
+      // few cheap file reads; only the first wiped profile found is
+      // reported — a later one gets caught the next time the menu opens.
+      const wiped = profiles.find((p) => isCredentialsWiped(p.dirPath));
+      if (wiped) {
+        const reLoginLabel = vscode.l10n.t('Log in again');
+        const choice = await vscode.window.showWarningMessage(
+          vscode.l10n.t(
+            '"{0}"\'s login session was lost (its token got cleared) — log in again to keep using it.',
+            wiped.name
+          ),
+          reLoginLabel
+        );
+        if (choice === reLoginLabel) {
+          const activeProfile = activeId ? findProfile(profilesJsonPath, activeId) : undefined;
+          await runReLoginFlow(context, wiped, activeProfile, getIsPinned(context));
+        }
+        return;
+      }
+
       const result = await showMainMenu(profiles, activeId);
       if (!result) {
         return;
