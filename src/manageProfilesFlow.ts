@@ -11,15 +11,15 @@ export async function runRenameFlow(profileId: string): Promise<void> {
   }
   const others = listProfiles(profilesJsonPath).filter((p) => p.id !== profileId);
   const newName = await vscode.window.showInputBox({
-    prompt: `Đổi tên "${profile.name}" thành:`,
+    prompt: vscode.l10n.t('Đổi tên "{0}" thành:', profile.name),
     value: profile.name,
-    validateInput: (value) => validateNewProfileName(value, others),
+    validateInput: (value) => validateNewProfileName(value, others, vscode.l10n.t),
   });
   if (!newName || newName === profile.name) {
     return;
   }
   renameProfile(profilesJsonPath, profileId, newName);
-  vscode.window.showInformationMessage(`Đã đổi tên thành "${newName}".`);
+  vscode.window.showInformationMessage(vscode.l10n.t('Đã đổi tên thành "{0}".', newName));
 }
 
 export async function runRemoveFlow(profileId: string): Promise<{ removed: boolean }> {
@@ -28,15 +28,19 @@ export async function runRemoveFlow(profileId: string): Promise<{ removed: boole
   if (!profile) {
     return { removed: false };
   }
+  const removeLabel = vscode.l10n.t('Xoá');
   const confirm = await vscode.window.showWarningMessage(
-    `Xoá profile "${profile.name}" khỏi danh sách? (File credentials trên đĩa sẽ được giữ lại, không bị xoá)`,
+    vscode.l10n.t(
+      'Xoá profile "{0}" khỏi danh sách? (File credentials trên đĩa sẽ được giữ lại, không bị xoá)',
+      profile.name
+    ),
     { modal: true },
-    'Xoá'
+    removeLabel
   );
-  if (confirm !== 'Xoá') {
+  if (confirm !== removeLabel) {
     return { removed: false };
   }
   removeProfile(profilesJsonPath, profileId);
-  vscode.window.showInformationMessage(`Đã xoá "${profile.name}" khỏi danh sách.`);
+  vscode.window.showInformationMessage(vscode.l10n.t('Đã xoá "{0}" khỏi danh sách.', profile.name));
   return { removed: true };
 }

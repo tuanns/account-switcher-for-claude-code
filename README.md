@@ -1,7 +1,22 @@
-# Claude Profile Switcher
+# Account Switcher for Claude Code
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 VSCode extension để chuyển đổi nhanh giữa nhiều tài khoản Claude Code đã đăng nhập,
 không cần đăng nhập lại.
+
+*Switch quickly between multiple logged-in Claude Code accounts, no re-login
+needed. UI available in Vietnamese and English — follows your VS Code display
+language ([`--locale`](https://code.visualstudio.com/docs/getstarted/locales)),
+defaults to Vietnamese if your language isn't packaged yet.*
+
+> Đây là extension **cộng đồng, không chính thức** — không phải sản phẩm của
+> Anthropic. "Claude" và "Claude Code" là thương hiệu của Anthropic, dùng ở đây
+> chỉ để mô tả extension tương thích với Claude Code.
+>
+> *This is an **unofficial, community** extension — not an Anthropic product.
+> "Claude" and "Claude Code" are Anthropic's trademarks, referenced here only
+> to describe compatibility.*
 
 ## Cách dùng
 
@@ -24,13 +39,24 @@ không cần đăng nhập lại.
 5. Dùng VSCode Profiles (Work/Personal/...) để mỗi Profile tự nhớ riêng một tài
    khoản Claude.
 
+Mọi profile dùng chung 1 thư mục `projects/` (lịch sử hội thoại/session) — đổi
+tài khoản không làm mất session cũ của bất kỳ project nào.
+
+## Giới hạn hiện tại
+
+- Chỉ hỗ trợ **Windows** desktop VSCode (chưa test remote/WSL/web extension,
+  macOS, Linux).
+- Phụ thuộc hành vi nội bộ chưa document của extension "Claude Code" chính
+  thức (đọc `CLAUDE_CONFIG_DIR` lúc spawn subprocess) — có thể ngừng hoạt động
+  nếu Anthropic đổi cách spawn ở bản mới.
+
 ## Build & cài đặt local
 
 ```bash
 npm install
 npm run compile
 npm run package        # tạo file .vsix
-code --install-extension claude-profile-switcher-0.1.0.vsix
+code --install-extension account-switcher-for-claude-code-0.2.0.vsix
 ```
 
 ## Development
@@ -44,3 +70,18 @@ Nhấn `F5` trong VSCode (mở project này) để launch Extension Development 
 test trực tiếp.
 
 Xem chi tiết thiết kế tại `docs/superpowers/specs/2026-08-20-claude-profile-switcher-design.md`.
+
+## Đóng góp / Contributing
+
+Repo mã nguồn mở, hoan nghênh issue/PR. *Open source, issues and PRs welcome.*
+
+## Ủng hộ / Support
+
+Nếu extension này có ích, bạn có thể ủng hộ tại: **(link donate — sẽ cập nhật)**.
+
+*If this extension is useful to you, you can support it at: **(donate link —
+to be added)**.*
+
+## License
+
+[MIT](LICENSE)

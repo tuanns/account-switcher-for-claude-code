@@ -30,7 +30,7 @@ export function registerCommands(
   context: vscode.ExtensionContext,
   statusBarItem: vscode.StatusBarItem
 ): void {
-  const openMenu = vscode.commands.registerCommand('claudeProfileSwitcher.openMenu', () =>
+  const openMenu = vscode.commands.registerCommand('accountSwitcherForClaudeCode.openMenu', () =>
     withBusyGuard(async () => {
       const profilesJsonPath = getProfilesJsonPath();
       const profiles = refreshProfilesAccountCache(profilesJsonPath);
@@ -51,11 +51,11 @@ export function registerCommands(
         const created = await runAddProfileFlow(context, activeProfile, getIsPinned(context));
         if (created) {
           const switchNow = await vscode.window.showInformationMessage(
-            `Chuyển sang "${created.name}" ngay bây giờ?`,
-            'Có',
-            'Để sau'
+            vscode.l10n.t('Chuyển sang "{0}" ngay bây giờ?', created.name),
+            vscode.l10n.t('Có'),
+            vscode.l10n.t('Để sau')
           );
-          if (switchNow === 'Có') {
+          if (switchNow === vscode.l10n.t('Có')) {
             await switchLive(context, statusBarItem, created.id);
           }
         }
@@ -136,7 +136,10 @@ export async function switchLive(
 
   if (profile) {
     vscode.window.showInformationMessage(
-      `Đã chuyển sang "${profile.name}". Cuộc trò chuyện ĐANG MỞ vẫn dùng tài khoản cũ — mở cuộc trò chuyện mới để dùng "${profile.name}".`
+      vscode.l10n.t(
+        'Đã chuyển sang "{0}". Cuộc trò chuyện ĐANG MỞ vẫn dùng tài khoản cũ — mở cuộc trò chuyện mới để dùng "{0}".',
+        profile.name
+      )
     );
   }
 }
@@ -177,7 +180,7 @@ export async function switchPinned(
       // Extension chinh thuc co the doi id lenh; switch env van thanh cong.
     }
     vscode.window.showInformationMessage(
-      `Cửa sổ này dùng riêng "${profile.name}". Đã mở conversation mới dùng tài khoản này.`
+      vscode.l10n.t('Cửa sổ này dùng riêng "{0}". Đã mở conversation mới dùng tài khoản này.', profile.name)
     );
   }
 }

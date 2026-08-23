@@ -1,17 +1,19 @@
 import * as fs from 'fs';
 import type { ClaudeProfile } from './profileStore';
+import { identityTranslate, type Translate } from './i18n';
 
 export function validateNewProfileName(
   name: string,
-  existingProfiles: ClaudeProfile[]
+  existingProfiles: ClaudeProfile[],
+  t: Translate = identityTranslate
 ): string | undefined {
   const trimmed = name.trim();
   if (trimmed.length === 0) {
-    return 'Tên profile không được để trống';
+    return t('Tên profile không được để trống');
   }
   const normalized = trimmed.toLowerCase();
   if (existingProfiles.some((p) => p.name.trim().toLowerCase() === normalized)) {
-    return `Đã có profile tên "${trimmed}"`;
+    return t('Đã có profile tên "{0}"', trimmed);
   }
   return undefined;
 }

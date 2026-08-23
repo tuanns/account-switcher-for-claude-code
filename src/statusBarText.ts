@@ -1,8 +1,12 @@
 import type { ClaudeProfile } from './profileStore';
+import { identityTranslate, type Translate } from './i18n';
 
-export function renderStatusBarText(activeProfile: ClaudeProfile | undefined): string {
+export function renderStatusBarText(
+  activeProfile: ClaudeProfile | undefined,
+  t: Translate = identityTranslate
+): string {
   if (!activeProfile) {
-    return '$(account) Claude: (none)';
+    return t('$(account) Claude: (none)');
   }
-  return `$(account) Claude: ${activeProfile.name}`;
+  return t('$(account) Claude: {0}', activeProfile.name);
 }

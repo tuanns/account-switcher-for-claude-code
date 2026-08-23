@@ -22,15 +22,17 @@ export async function showMainMenu(
     action: { kind: 'switchLive', profileId: p.id },
   }));
   items.push({
-    label: '$(window) Mở cửa sổ độc lập với profile khác...',
-    detail: 'Chỉ cửa sổ này dùng profile riêng, không ảnh hưởng conversation/cửa sổ khác',
+    label: vscode.l10n.t('$(window) Mở cửa sổ độc lập với profile khác...'),
+    detail: vscode.l10n.t(
+      'Chỉ cửa sổ này dùng profile riêng, không ảnh hưởng conversation/cửa sổ khác'
+    ),
     action: { kind: 'pinMenu' },
   });
-  items.push({ label: '$(add) Thêm tài khoản mới...', action: { kind: 'add' } });
-  items.push({ label: '$(gear) Quản lý profile...', action: { kind: 'manage' } });
+  items.push({ label: vscode.l10n.t('$(add) Thêm tài khoản mới...'), action: { kind: 'add' } });
+  items.push({ label: vscode.l10n.t('$(gear) Quản lý profile...'), action: { kind: 'manage' } });
 
   const picked = await vscode.window.showQuickPick(items, {
-    placeHolder: 'Chọn tài khoản Claude (giữ nguyên conversation hiện tại)',
+    placeHolder: vscode.l10n.t('Chọn tài khoản Claude (giữ nguyên conversation hiện tại)'),
   });
   return picked?.action;
 }
@@ -51,7 +53,7 @@ export async function showPinMenu(
     action: { kind: 'switchPinned', profileId: p.id },
   }));
   const picked = await vscode.window.showQuickPick(items, {
-    placeHolder: 'Cửa sổ này dùng riêng profile nào? (sẽ mở conversation mới)',
+    placeHolder: vscode.l10n.t('Cửa sổ này dùng riêng profile nào? (sẽ mở conversation mới)'),
   });
   return picked?.action;
 }
@@ -69,16 +71,16 @@ export async function showManageMenu(profiles: ClaudeProfile[]): Promise<ManageM
   const items: ManageMenuItem[] = [];
   for (const p of profiles) {
     items.push({
-      label: `$(edit) Đổi tên "${p.name}"`,
+      label: vscode.l10n.t('$(edit) Đổi tên "{0}"', p.name),
       action: { kind: 'rename', profileId: p.id },
     });
     items.push({
-      label: `$(trash) Xoá "${p.name}"`,
+      label: vscode.l10n.t('$(trash) Xoá "{0}"', p.name),
       action: { kind: 'remove', profileId: p.id },
     });
   }
   const picked = await vscode.window.showQuickPick(items, {
-    placeHolder: 'Quản lý profile',
+    placeHolder: vscode.l10n.t('Quản lý profile'),
   });
   return picked?.action;
 }
