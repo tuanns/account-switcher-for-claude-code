@@ -11,13 +11,13 @@ function makeProfile(name: string): ClaudeProfile {
 }
 
 test('validateNewProfileName rejects empty name', () => {
-  assert.equal(validateNewProfileName('   ', []), 'Tên profile không được để trống');
+  assert.equal(validateNewProfileName('   ', []), 'Profile name cannot be empty');
 });
 
 test('validateNewProfileName rejects duplicate name case-insensitively', () => {
   assert.equal(
     validateNewProfileName('work', [makeProfile('Work')]),
-    'Đã có profile tên "work"'
+    'A profile named "work" already exists'
   );
 });
 

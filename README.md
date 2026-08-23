@@ -6,9 +6,9 @@ VSCode extension để chuyển đổi nhanh giữa nhiều tài khoản Claude 
 không cần đăng nhập lại.
 
 *Switch quickly between multiple logged-in Claude Code accounts, no re-login
-needed. UI available in Vietnamese and English — follows your VS Code display
+needed. UI available in English and Vietnamese — follows your VS Code display
 language ([`--locale`](https://code.visualstudio.com/docs/getstarted/locales)),
-defaults to Vietnamese if your language isn't packaged yet.*
+defaults to English if your language isn't packaged yet.*
 
 > Đây là extension **cộng đồng, không chính thức** — không phải sản phẩm của
 > Anthropic. "Claude" và "Claude Code" là thương hiệu của Anthropic, dùng ở đây

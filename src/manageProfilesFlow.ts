@@ -11,7 +11,7 @@ export async function runRenameFlow(profileId: string): Promise<void> {
   }
   const others = listProfiles(profilesJsonPath).filter((p) => p.id !== profileId);
   const newName = await vscode.window.showInputBox({
-    prompt: vscode.l10n.t('Đổi tên "{0}" thành:', profile.name),
+    prompt: vscode.l10n.t('Rename "{0}" to:', profile.name),
     value: profile.name,
     validateInput: (value) => validateNewProfileName(value, others, vscode.l10n.t),
   });
@@ -19,7 +19,7 @@ export async function runRenameFlow(profileId: string): Promise<void> {
     return;
   }
   renameProfile(profilesJsonPath, profileId, newName);
-  vscode.window.showInformationMessage(vscode.l10n.t('Đã đổi tên thành "{0}".', newName));
+  vscode.window.showInformationMessage(vscode.l10n.t('Renamed to "{0}".', newName));
 }
 
 export async function runRemoveFlow(profileId: string): Promise<{ removed: boolean }> {
@@ -28,10 +28,10 @@ export async function runRemoveFlow(profileId: string): Promise<{ removed: boole
   if (!profile) {
     return { removed: false };
   }
-  const removeLabel = vscode.l10n.t('Xoá');
+  const removeLabel = vscode.l10n.t('Delete');
   const confirm = await vscode.window.showWarningMessage(
     vscode.l10n.t(
-      'Xoá profile "{0}" khỏi danh sách? (File credentials trên đĩa sẽ được giữ lại, không bị xoá)',
+      'Remove profile "{0}" from the list? (Its credentials file on disk is kept, not deleted)',
       profile.name
     ),
     { modal: true },
@@ -41,6 +41,6 @@ export async function runRemoveFlow(profileId: string): Promise<{ removed: boole
     return { removed: false };
   }
   removeProfile(profilesJsonPath, profileId);
-  vscode.window.showInformationMessage(vscode.l10n.t('Đã xoá "{0}" khỏi danh sách.', profile.name));
+  vscode.window.showInformationMessage(vscode.l10n.t('Removed "{0}" from the list.', profile.name));
   return { removed: true };
 }

@@ -31,7 +31,7 @@ export async function runAddProfileFlow(
   if (!isClaudeCliAvailable()) {
     vscode.window.showErrorMessage(
       vscode.l10n.t(
-        'Không tìm thấy lệnh "claude" trong PATH. Hãy cài Claude Code CLI trước (npm install -g @anthropic-ai/claude-code) rồi thử lại.'
+        'Couldn\'t find the "claude" command on PATH. Install the Claude Code CLI first (npm install -g @anthropic-ai/claude-code), then try again.'
       )
     );
     return undefined;
@@ -41,7 +41,7 @@ export async function runAddProfileFlow(
   const existing = listProfiles(profilesJsonPath);
 
   const name = await vscode.window.showInputBox({
-    prompt: vscode.l10n.t('Tên gợi nhớ cho tài khoản Claude mới'),
+    prompt: vscode.l10n.t('A memorable name for the new Claude account'),
     placeHolder: 'Work',
     validateInput: (value) => validateNewProfileName(value, existing, vscode.l10n.t),
   });
@@ -95,7 +95,7 @@ export async function runAddProfileFlow(
   const loggedIn = await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Window,
-      title: vscode.l10n.t('Đang chờ đăng nhập cho "{0}"...', name),
+      title: vscode.l10n.t('Waiting for login for "{0}"...', name),
     },
     () => waitForCredentialsFile(credentialsPath, LOGIN_TIMEOUT_MS)
   );
@@ -104,7 +104,7 @@ export async function runAddProfileFlow(
     terminal.dispose();
     fs.rmSync(dirPath, { recursive: true, force: true });
     vscode.window.showWarningMessage(
-      vscode.l10n.t('Không phát hiện đăng nhập thành công cho "{0}" (quá 5 phút). Đã huỷ.', name)
+      vscode.l10n.t('No successful login detected for "{0}" (over 5 minutes). Cancelled.', name)
     );
     return undefined;
   }
@@ -116,6 +116,6 @@ export async function runAddProfileFlow(
     email: cache.email,
     organizationName: cache.organizationName,
   });
-  vscode.window.showInformationMessage(vscode.l10n.t('Đã thêm tài khoản "{0}".', name));
+  vscode.window.showInformationMessage(vscode.l10n.t('Added account "{0}".', name));
   return profile;
 }

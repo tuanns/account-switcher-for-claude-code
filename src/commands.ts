@@ -51,11 +51,11 @@ export function registerCommands(
         const created = await runAddProfileFlow(context, activeProfile, getIsPinned(context));
         if (created) {
           const switchNow = await vscode.window.showInformationMessage(
-            vscode.l10n.t('Chuyển sang "{0}" ngay bây giờ?', created.name),
-            vscode.l10n.t('Có'),
-            vscode.l10n.t('Để sau')
+            vscode.l10n.t('Switch to "{0}" now?', created.name),
+            vscode.l10n.t('Yes'),
+            vscode.l10n.t('Later')
           );
-          if (switchNow === vscode.l10n.t('Có')) {
+          if (switchNow === vscode.l10n.t('Yes')) {
             await switchLive(context, statusBarItem, created.id);
           }
         }
@@ -137,7 +137,7 @@ export async function switchLive(
   if (profile) {
     vscode.window.showInformationMessage(
       vscode.l10n.t(
-        'Đã chuyển sang "{0}". Cuộc trò chuyện ĐANG MỞ vẫn dùng tài khoản cũ — mở cuộc trò chuyện mới để dùng "{0}".',
+        'Switched to "{0}". The conversation that\'s currently OPEN still uses the old account — open a new conversation to use "{0}".',
         profile.name
       )
     );
@@ -180,7 +180,7 @@ export async function switchPinned(
       // Extension chinh thuc co the doi id lenh; switch env van thanh cong.
     }
     vscode.window.showInformationMessage(
-      vscode.l10n.t('Cửa sổ này dùng riêng "{0}". Đã mở conversation mới dùng tài khoản này.', profile.name)
+      vscode.l10n.t('This window now uses "{0}" exclusively. Opened a new conversation using this account.', profile.name)
     );
   }
 }

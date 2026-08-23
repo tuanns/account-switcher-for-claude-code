@@ -9,11 +9,11 @@ export function validateNewProfileName(
 ): string | undefined {
   const trimmed = name.trim();
   if (trimmed.length === 0) {
-    return t('Tên profile không được để trống');
+    return t('Profile name cannot be empty');
   }
   const normalized = trimmed.toLowerCase();
   if (existingProfiles.some((p) => p.name.trim().toLowerCase() === normalized)) {
-    return t('Đã có profile tên "{0}"', trimmed);
+    return t('A profile named "{0}" already exists', trimmed);
   }
   return undefined;
 }

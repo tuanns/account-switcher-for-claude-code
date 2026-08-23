@@ -6,7 +6,7 @@
  * unit-tested with plain `node --test`, where the real `vscode` module
  * doesn't exist — they can't import it directly. They accept an optional
  * `Translate` function instead, defaulting to `identityTranslate` (which
- * just substitutes placeholders into the literal Vietnamese source string,
+ * just substitutes placeholders into the literal English source string,
  * so existing tests that call them with no translator keep getting exactly
  * the same output as before). Real callers running inside the extension
  * host pass `vscode.l10n.t` itself.
