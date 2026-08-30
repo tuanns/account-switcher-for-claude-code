@@ -22,12 +22,13 @@ export function getLiveDir(): string {
 }
 
 /**
- * Single directory shared by every profile's `<dirPath>/projects` (see
- * `sharedProjects.ts`), so conversation history stays visible/resumable no
- * matter which account is active.
+ * Root for the directories shared by every profile's `<dirPath>/<name>`
+ * (see `sharedDirs.ts`) — e.g. `projects` (conversation history), `plugins`,
+ * `skills` — so that content stays visible no matter which account is
+ * active.
  */
-export function getSharedProjectsDir(): string {
-  return path.join(getProfilesRoot(), '_shared', 'projects');
+export function getSharedDir(name: string): string {
+  return path.join(getProfilesRoot(), '_shared', name);
 }
 
 export function slugify(name: string): string {

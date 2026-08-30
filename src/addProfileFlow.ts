@@ -3,10 +3,10 @@ import * as fs from 'fs';
 import { execFileSync } from 'child_process';
 import { addProfile, listProfiles } from './profileStore';
 import type { ClaudeProfile } from './profileStore';
-import { getProfilesJsonPath, getUniqueProfileDirPath, getSharedProjectsDir } from './paths';
+import { getProfilesJsonPath, getUniqueProfileDirPath } from './paths';
 import { validateNewProfileName } from './addProfileLogic';
 import { readOAuthAccountCache } from './migration';
-import { ensureProjectsShared } from './sharedProjects';
+import { ensureAllDirsShared } from './sharedDirs';
 import { openLoginTerminalAndWaitForCredentials } from './loginTerminal';
 
 function isClaudeCliAvailable(): boolean {
@@ -48,10 +48,11 @@ export async function runAddProfileFlow(
 
   const dirPath = getUniqueProfileDirPath(name);
   fs.mkdirSync(dirPath, { recursive: true });
-  // Junction `projects/` to the shared dir from the very start, so this
-  // profile's conversation history is visible/resumable under every other
-  // profile too, instead of starting its own separate history tree.
-  ensureProjectsShared(dirPath, getSharedProjectsDir());
+  // Junction projects/plugins/skills to the shared dirs from the very
+  // start, so this profile's conversation history, installed plugins and
+  // skills are all visible under every other profile too, instead of
+  // starting empty.
+  ensureAllDirsShared(dirPath);
 
   const { loggedIn, terminal } = await openLoginTerminalAndWaitForCredentials(context, dirPath, name, {
     activeProfile,

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getProfilesJsonPath, getLiveDir, getSharedProjectsDir } from './paths';
+import { getProfilesJsonPath, getLiveDir } from './paths';
 import { findProfile, listProfiles } from './profileStore';
 import { refreshProfilesAccountCache } from './accountCache';
 import { getActiveProfileId, setActiveProfileId, getIsPinned, setIsPinned } from './activeProfileState';
@@ -10,7 +10,7 @@ import { showMainMenu, showManageMenu, showPinMenu } from './quickPick';
 import { runAddProfileFlow } from './addProfileFlow';
 import { runRenameFlow, runRemoveFlow } from './manageProfilesFlow';
 import { swapCredentialsIntoLive } from './liveSwap';
-import { ensureProjectsShared } from './sharedProjects';
+import { ensureAllDirsShared } from './sharedDirs';
 import { isCredentialsWiped } from './credentialsHealth';
 import { runReLoginFlow } from './reLoginFlow';
 
@@ -148,7 +148,7 @@ export async function switchLive(
     swapCredentialsIntoLive(profile.dirPath, liveDir);
   }
   try {
-    ensureProjectsShared(liveDir, getSharedProjectsDir());
+    ensureAllDirsShared(liveDir);
   } catch {
     // Best-effort; a later switch retries it.
   }
@@ -186,7 +186,7 @@ export async function switchPinned(
 
   if (profile) {
     try {
-      ensureProjectsShared(profile.dirPath, getSharedProjectsDir());
+      ensureAllDirsShared(profile.dirPath);
     } catch {
       // Best-effort; a later switch retries it.
     }

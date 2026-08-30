@@ -2,7 +2,7 @@
   "name": "account-switcher-for-claude-code",
   "displayName": "Account Switcher for Claude Code",
   "description": "Switch quickly between multiple logged-in Claude Code accounts, no re-login needed. / Chuyen doi nhanh giua nhieu tai khoan Claude Code da dang nhap, khong can dang nhap lai.",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "local",
   "license": "MIT",
   "private": true,
@@ -27,7 +27,8 @@
     ]
   },
   "scripts": {
-    "compile": "tsc -p ./",
+    "clean": "node -e \"require('fs').rmSync('out',{recursive:true,force:true})\"",
+    "compile": "npm run clean && tsc -p ./",
     "watch": "tsc -w -p ./",
     "test": "npm run compile && node --test out/test/**/*.test.js",
     "package": "vsce package"

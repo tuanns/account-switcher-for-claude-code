@@ -50,11 +50,14 @@ profile đó, phải mở conversation mới. 4. Muốn chạy song song nhiều
 dùng "Mở cửa sổ độc lập..." ở mỗi cửa sổ. 5. Dùng VSCode Profiles để mỗi
 Profile tự nhớ riêng một tài khoản Claude.)*
 
-All profiles share one `projects/` directory (conversation/session history) —
-switching accounts never loses a project's existing session history.
+All profiles share the same `projects/` (conversation/session history),
+`plugins/`, and `skills/` — switching accounts never loses a project's
+session history, installed plugins, or installed skills. Only credentials
+and account identity stay per-profile.
 
-*(Mọi profile dùng chung 1 thư mục `projects/` — đổi tài khoản không làm mất
-session cũ của bất kỳ project nào.)*
+*(Mọi profile dùng chung `projects/`, `plugins/`, `skills/` — đổi tài khoản
+không làm mất session cũ, plugin hay skill đã cài của bất kỳ project nào.
+Chỉ credentials và danh tính tài khoản là riêng theo từng profile.)*
 
 ## Current limitations
 
