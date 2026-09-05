@@ -101,7 +101,7 @@ ghi trắng, phải đăng nhập lại.)*
 npm install
 npm run compile
 npm run package        # produces the .vsix file
-code --install-extension account-switcher-for-claude-code-0.4.0.vsix
+code --install-extension account-switcher-for-claude-code-0.4.1.vsix
 ```
 
 ## Development
