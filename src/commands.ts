@@ -32,7 +32,7 @@ export function registerCommands(
   context: vscode.ExtensionContext,
   statusBarItem: vscode.StatusBarItem
 ): void {
-  const openMenu = vscode.commands.registerCommand('accountSwitcherForClaudeCode.openMenu', () =>
+  const openMenu = vscode.commands.registerCommand('profileSwitcherForClaudeCode.openMenu', () =>
     withBusyGuard(async () => {
       const profilesJsonPath = getProfilesJsonPath();
       const profiles = refreshProfilesAccountCache(profilesJsonPath);

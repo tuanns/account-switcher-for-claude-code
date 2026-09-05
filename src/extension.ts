@@ -53,7 +53,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   applyProfileEnvironment(effectiveProfile);
   applyEnvironmentVariableCollection(context, effectiveProfile);
 
-  const statusBarItem = createStatusBarItem('accountSwitcherForClaudeCode.openMenu');
+  const statusBarItem = createStatusBarItem('profileSwitcherForClaudeCode.openMenu');
   refreshStatusBar(statusBarItem, activeProfile);
   context.subscriptions.push(statusBarItem);
 

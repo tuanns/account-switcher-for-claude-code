@@ -1,7 +1,7 @@
 {
-  "name": "account-switcher-for-claude-code",
-  "displayName": "Account Switcher for Claude Code",
-  "description": "Switch quickly between multiple logged-in Claude Code accounts, no re-login needed. / Chuyen doi nhanh giua nhieu tai khoan Claude Code da dang nhap, khong can dang nhap lai.",
+  "name": "profile-switcher-for-claude-code",
+  "displayName": "Profile Switcher for Claude Code",
+  "description": "Switch quickly between multiple logged-in Claude Code accounts, no re-login needed. Open source — read the code before you install: github.com/tuanns/account-switcher-for-claude-code. / Chuyen doi nhanh giua nhieu tai khoan Claude Code da dang nhap, khong can dang nhap lai. Ma nguon mo, kiem tra truoc khi cai dat.",
   "version": "0.6.2",
   "publisher": "tuanns",
   "license": "MIT",
@@ -13,7 +13,7 @@
     "url": "https://github.com/tuanns/account-switcher-for-claude-code/issues"
   },
   "homepage": "https://github.com/tuanns/account-switcher-for-claude-code#readme",
-  "keywords": ["claude", "claude code", "account", "profile", "switcher", "multi-account"],
+  "keywords": ["claude", "claude code", "account", "profile", "switcher", "multi-account", "open source"],
   "icon": "icon.png",
   "engines": {
     "vscode": "^1.90.0"
@@ -25,8 +25,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "accountSwitcherForClaudeCode.openMenu",
-        "title": "Account Switcher for Claude Code: Open Menu"
+        "command": "profileSwitcherForClaudeCode.openMenu",
+        "title": "Profile Switcher for Claude Code: Open Menu"
       }
     ]
   },

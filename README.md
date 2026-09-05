@@ -1,4 +1,4 @@
-# Account Switcher for Claude Code
+# Profile Switcher for Claude Code
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -9,6 +9,20 @@ defaults to English if your language isn't packaged yet.
 
 *(VSCode extension để chuyển đổi nhanh giữa nhiều tài khoản Claude Code đã
 đăng nhập, không cần đăng nhập lại.)*
+
+> **Open source — read the code before you install it.** This extension
+> touches your Claude Code credentials (`.credentials.json`), so don't just
+> take our word that it's safe: every line is public at
+> [github.com/tuanns/account-switcher-for-claude-code](https://github.com/tuanns/account-switcher-for-claude-code),
+> under the MIT license, free to audit, fork, or build yourself from source
+> instead of installing the packaged `.vsix`.
+>
+> *(Mã nguồn mở — hãy tự đọc code trước khi cài. Extension này đụng vào
+> credentials Claude Code của bạn (`.credentials.json`), nên đừng chỉ tin lời
+> chúng tôi nói là an toàn: toàn bộ code đều công khai tại
+> [github.com/tuanns/account-switcher-for-claude-code](https://github.com/tuanns/account-switcher-for-claude-code),
+> giấy phép MIT, tự do kiểm tra, fork, hoặc tự build từ source thay vì cài
+> file `.vsix` đóng gói sẵn.)*
 
 > This is an **unofficial, community** extension — not an Anthropic product.
 > "Claude" and "Claude Code" are Anthropic's trademarks, referenced here only
@@ -127,11 +141,13 @@ Open source, issues and PRs welcome:
 
 ## Support
 
-If this extension is useful to you, you can support it via PayPal:
-**[paypal.me/tuanns285](https://paypal.me/tuanns285)**.
+If this extension is useful to you, you can support it via PayPal
+(**[paypal.me/tuanns285](https://paypal.me/tuanns285)**) or the **Sponsor**
+button on this repo's GitHub page (GitHub Sponsors).
 
-*(Nếu extension này có ích, bạn có thể ủng hộ qua PayPal:
-[paypal.me/tuanns285](https://paypal.me/tuanns285).)*
+*(Nếu extension này có ích, bạn có thể ủng hộ qua PayPal
+([paypal.me/tuanns285](https://paypal.me/tuanns285)) hoặc nút **Sponsor**
+trên trang GitHub của repo này (GitHub Sponsors).)*
 
 ## License
 
