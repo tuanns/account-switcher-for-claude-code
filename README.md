@@ -61,8 +61,13 @@ Chỉ credentials và danh tính tài khoản là riêng theo từng profile.)*
 
 ## Current limitations
 
-- **Windows** desktop VS Code only (remote/WSL/web extension, macOS, and
-  Linux are untested).
+- Developed and tested on **Windows** desktop VS Code. Nothing in the code is
+  Windows-specific (paths use `path.join`, the one OS branch already handles
+  `which` vs `where`, and the directory-sharing symlinks fall back to plain
+  symlinks — no special handling needed — on non-Windows per Node's docs), so
+  it likely works as-is on **macOS/Linux** desktop VS Code too, but this
+  hasn't actually been run there yet — remote/WSL/web extension are also
+  untested. Try it and report back if something's off.
 - Relies on undocumented internal behavior of the official "Claude Code"
   extension (reading `CLAUDE_CONFIG_DIR` when it spawns its subprocess) — this
   could stop working if Anthropic changes how it spawns in a future release.
@@ -79,11 +84,16 @@ Chỉ credentials và danh tính tài khoản là riêng theo từng profile.)*
   own `.credentials.json`, only to the shared `_live` copy). If it happens,
   just log in again for that profile's directory.
 
-*(Chỉ hỗ trợ Windows desktop VSCode. Phụ thuộc hành vi nội bộ chưa document
-của extension "Claude Code" chính thức — có thể ngừng hoạt động nếu Anthropic
-đổi cách spawn ở bản mới. Tránh dùng cùng 1 profile từ 2 tiến trình cùng lúc
-— dễ gây race lúc refresh token, có thể làm credentials bị ghi trắng, phải
-đăng nhập lại.)*
+*(Được phát triển và test trên Windows desktop VSCode. Code không có gì
+Windows-riêng (path dùng `path.join`, nhánh OS đã xử lý đúng `which`/`where`,
+symlink chia sẻ thư mục tự động fallback về symlink thường trên non-Windows)
+nên nhiều khả năng chạy được luôn trên macOS/Linux desktop VSCode, nhưng
+chưa thực sự chạy thử trên đó — remote/WSL/web extension cũng chưa test.
+Cứ thử và báo lại nếu có gì bất thường. Phụ thuộc hành vi nội bộ chưa
+document của extension "Claude Code" chính thức — có thể ngừng hoạt động
+nếu Anthropic đổi cách spawn ở bản mới. Tránh dùng cùng 1 profile từ 2 tiến
+trình cùng lúc — dễ gây race lúc refresh token, có thể làm credentials bị
+ghi trắng, phải đăng nhập lại.)*
 
 ## Build & install locally
 
