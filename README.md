@@ -101,7 +101,7 @@ ghi trắng, phải đăng nhập lại.)*
 npm install
 npm run compile
 npm run package        # produces the .vsix file
-code --install-extension account-switcher-for-claude-code-0.2.1.vsix
+code --install-extension account-switcher-for-claude-code-0.4.0.vsix
 ```
 
 ## Development
@@ -125,11 +125,11 @@ Open source, issues and PRs welcome.
 
 ## Support
 
-If this extension is useful to you, you can support it at: **(donate link —
-to be added)**.
+If this extension is useful to you, you can support it via PayPal:
+**[paypal.me/tuanns285](https://paypal.me/tuanns285)**.
 
-*(Nếu extension này có ích, bạn có thể ủng hộ tại: link donate sẽ cập nhật
-sau.)*
+*(Nếu extension này có ích, bạn có thể ủng hộ qua PayPal:
+[paypal.me/tuanns285](https://paypal.me/tuanns285).)*
 
 ## License
 
