@@ -2,7 +2,7 @@
   "name": "account-switcher-for-claude-code",
   "displayName": "Account Switcher for Claude Code",
   "description": "Switch quickly between multiple logged-in Claude Code accounts, no re-login needed. / Chuyen doi nhanh giua nhieu tai khoan Claude Code da dang nhap, khong can dang nhap lai.",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "publisher": "local",
   "license": "MIT",
   "private": true,
@@ -10,6 +10,10 @@
     "type": "git",
     "url": "https://github.com/tuanns/account-switcher-for-claude-code.git"
   },
+  "bugs": {
+    "url": "https://github.com/tuanns/account-switcher-for-claude-code/issues"
+  },
+  "homepage": "https://github.com/tuanns/account-switcher-for-claude-code#readme",
   "keywords": ["claude", "claude code", "account", "profile", "switcher", "multi-account"],
   "icon": "icon.png",
   "engines": {

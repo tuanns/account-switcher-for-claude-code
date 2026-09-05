@@ -6,6 +6,7 @@ export type MainMenuResult =
   | { kind: 'pinMenu' }
   | { kind: 'add' }
   | { kind: 'manage' }
+  | { kind: 'openGithub' }
   | undefined;
 
 interface MenuItem extends vscode.QuickPickItem {
@@ -30,6 +31,7 @@ export async function showMainMenu(
   });
   items.push({ label: vscode.l10n.t('$(add) Add a new account...'), action: { kind: 'add' } });
   items.push({ label: vscode.l10n.t('$(gear) Manage profiles...'), action: { kind: 'manage' } });
+  items.push({ label: vscode.l10n.t('$(github) View source on GitHub'), action: { kind: 'openGithub' } });
 
   const picked = await vscode.window.showQuickPick(items, {
     placeHolder: vscode.l10n.t('Choose a Claude account (keeps the current conversation)'),

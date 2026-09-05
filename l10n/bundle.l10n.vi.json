@@ -29,5 +29,6 @@
   "Log in again": "Đăng nhập lại",
   "\"{0}\"'s login session was lost (its token got cleared) — log in again to keep using it.": "Phiên đăng nhập của \"{0}\" đã mất (token bị xoá) — đăng nhập lại để tiếp tục dùng.",
   "Claude Login: {0}": "Đăng nhập Claude: {0}",
-  "Logged in again for \"{0}\".": "Đã đăng nhập lại cho \"{0}\"."
+  "Logged in again for \"{0}\".": "Đã đăng nhập lại cho \"{0}\".",
+  "$(github) View source on GitHub": "$(github) Xem mã nguồn trên GitHub"
 }

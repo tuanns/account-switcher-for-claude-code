@@ -86,6 +86,11 @@ export function registerCommands(
         }
       } else if (result.kind === 'manage') {
         await handleManageMenu(context, statusBarItem);
+      } else if (result.kind === 'openGithub') {
+        const url = getRepositoryUrl(context);
+        if (url) {
+          await vscode.env.openExternal(vscode.Uri.parse(url));
+        }
       }
     })
   );
@@ -208,6 +213,21 @@ export async function switchPinned(
       vscode.l10n.t('This window now uses "{0}" exclusively. Opened a new conversation using this account.', profile.name)
     );
   }
+}
+
+/**
+ * Reads `repository.url` straight from this extension's own manifest
+ * (rather than hardcoding the GitHub URL a second time in source) and
+ * normalizes it into something a browser can open: strips the `git+`
+ * prefix and trailing `.git` that npm's `repository` field convention
+ * uses but a plain HTTPS link doesn't need.
+ */
+function getRepositoryUrl(context: vscode.ExtensionContext): string | undefined {
+  const raw = context.extension.packageJSON?.repository?.url as string | undefined;
+  if (!raw) {
+    return undefined;
+  }
+  return raw.replace(/^git\+/, '').replace(/\.git$/, '');
 }
 
 function refreshActiveDisplay(
