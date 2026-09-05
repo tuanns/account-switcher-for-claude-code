@@ -119,9 +119,11 @@ See the full design doc at
 
 ## Contributing
 
-Open source, issues and PRs welcome.
+Open source, issues and PRs welcome:
+**[github.com/tuanns/account-switcher-for-claude-code](https://github.com/tuanns/account-switcher-for-claude-code)**.
 
-*(Repo mã nguồn mở, hoan nghênh issue/PR.)*
+*(Repo mã nguồn mở, hoan nghênh issue/PR:
+[github.com/tuanns/account-switcher-for-claude-code](https://github.com/tuanns/account-switcher-for-claude-code).)*
 
 ## Support
 

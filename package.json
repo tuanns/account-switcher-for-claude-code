@@ -2,7 +2,7 @@
   "name": "account-switcher-for-claude-code",
   "displayName": "Account Switcher for Claude Code",
   "description": "Switch quickly between multiple logged-in Claude Code accounts, no re-login needed. / Chuyen doi nhanh giua nhieu tai khoan Claude Code da dang nhap, khong can dang nhap lai.",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "publisher": "local",
   "license": "MIT",
   "private": true,
