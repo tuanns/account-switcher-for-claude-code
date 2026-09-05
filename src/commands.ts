@@ -43,6 +43,13 @@ export function registerCommands(
       // confusing auth error. Checked on every menu open since it's just a
       // few cheap file reads; only the first wiped profile found is
       // reported — a later one gets caught the next time the menu opens.
+      //
+      // IMPORTANT: this must NOT block the switch menu below. A wiped
+      // profile is just ONE profile being broken — the user should still
+      // be able to switch to any other, working profile right away instead
+      // of being stuck behind a warning about a profile they may not even
+      // want to use right now. Only re-logging in (which takes over the UI
+      // itself) skips straight to done instead of also opening the menu.
       const wiped = profiles.find((p) => isCredentialsWiped(p.dirPath));
       if (wiped) {
         const reLoginLabel = vscode.l10n.t('Log in again');
@@ -56,8 +63,8 @@ export function registerCommands(
         if (choice === reLoginLabel) {
           const activeProfile = activeId ? findProfile(profilesJsonPath, activeId) : undefined;
           await runReLoginFlow(context, wiped, activeProfile, getIsPinned(context));
+          return;
         }
-        return;
       }
 
       const result = await showMainMenu(profiles, activeId);
