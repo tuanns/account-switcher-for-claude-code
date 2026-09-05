@@ -7,3 +7,4 @@ docs/**
 tsconfig.json
 **/*.ts
 **/*.map
+icon-source.svg

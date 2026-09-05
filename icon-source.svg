@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4F46E5"/>
+      <stop offset="100%" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="4" y="4" width="120" height="120" rx="26" fill="url(#bg)"/>
+
+  <!-- back badge (account B) -->
+  <g transform="translate(50,34) rotate(-10)">
+    <rect x="0" y="0" width="52" height="66" rx="10" fill="#C7D2FE"/>
+    <circle cx="26" cy="22" r="10" fill="#4F46E5" fill-opacity="0.5"/>
+    <rect x="12" y="40" width="28" height="6" rx="3" fill="#4F46E5" fill-opacity="0.5"/>
+    <rect x="16" y="50" width="20" height="6" rx="3" fill="#4F46E5" fill-opacity="0.35"/>
+  </g>
+
+  <!-- front badge (account A) -->
+  <g transform="translate(26,40) rotate(8)">
+    <rect x="0" y="0" width="52" height="66" rx="10" fill="#FFFFFF"/>
+    <circle cx="26" cy="22" r="10" fill="#7C3AED" fill-opacity="0.6"/>
+    <rect x="12" y="40" width="28" height="6" rx="3" fill="#7C3AED" fill-opacity="0.6"/>
+    <rect x="16" y="50" width="20" height="6" rx="3" fill="#7C3AED" fill-opacity="0.4"/>
+  </g>
+
+  <!-- swap badge, bottom-right corner -->
+  <circle cx="96" cy="96" r="29" fill="#FBBF24" stroke="#FFFFFF" stroke-width="3.5"/>
+  <g fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round">
+    <path d="M 85 86 A 13.5 13.5 0 0 1 108 92"/>
+    <path d="M 108 92 L 108 83 M 108 92 L 99 92"/>
+    <path d="M 107 106 A 13.5 13.5 0 0 1 84 100"/>
+    <path d="M 84 100 L 84 109 M 84 100 L 93 100"/>
+  </g>
+</svg>
