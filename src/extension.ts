@@ -3,6 +3,8 @@ import { getProfilesJsonPath, getLiveDir } from './paths';
 import { findProfile } from './profileStore';
 import { tryFirstRunMigration } from './migration';
 import { getActiveProfileId, setActiveProfileId, getIsPinned } from './activeProfileState';
+import { getWorkspacePinnedProfileId } from './workspacePin';
+import { resolveEffectiveProfile } from './effectiveProfile';
 import { applyProfileEnvironment } from './envApply';
 import { applyEnvironmentVariableCollection } from './envCollection';
 import { createStatusBarItem, refreshStatusBar } from './statusBar';
@@ -32,10 +34,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }
   }
 
-  const isPinned = getIsPinned(context);
-  const effectiveProfile = activeProfile
-    ? { ...activeProfile, dirPath: isPinned ? activeProfile.dirPath : getLiveDir() }
-    : undefined;
+  const resolved = resolveEffectiveProfile({
+    workspacePinnedId: getWorkspacePinnedProfileId(context),
+    activeId: activeProfile?.id,
+    isPinned: getIsPinned(context),
+    liveDir: getLiveDir(),
+    findProfile: (id) => findProfile(profilesJsonPath, id),
+  });
+  const effectiveProfile =
+    resolved.profile && resolved.dirPath ? { ...resolved.profile, dirPath: resolved.dirPath } : undefined;
 
   if (effectiveProfile) {
     // Lazily upgrade this directory's projects/plugins/skills to shared
@@ -54,7 +61,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   applyEnvironmentVariableCollection(context, effectiveProfile);
 
   const statusBarItem = createStatusBarItem('profileSwitcherForClaudeCode.openMenu');
-  refreshStatusBar(statusBarItem, activeProfile);
+  refreshStatusBar(statusBarItem, resolved.profile, resolved.source === 'workspace');
   context.subscriptions.push(statusBarItem);
 
   registerCommands(context, statusBarItem);

@@ -73,6 +73,29 @@ and account identity stay per-profile.
 không làm mất session cũ, plugin hay skill đã cài của bất kỳ project nào.
 Chỉ credentials và danh tính tài khoản là riêng theo từng profile.)*
 
+### Pinning a specific workspace to an account
+
+The regular switch (and even "Open an independent window...") is stored
+app-wide: switching accounts in *any* window updates that shared state, so a
+window you didn't touch can end up on the wrong account the next time it
+re-reads it. If you have a project that must always use one specific
+account no matter what happens in your other windows, use **"Pin this
+workspace to a profile..."** in the menu instead — it's stored per
+folder/workspace, not shared with any other window, and always resolves to
+that profile's own directory (never the shared "live" one), so it's
+completely immune to switches made anywhere else. Use **"Unpin this
+workspace"** to go back to following the regular app-wide switch.
+
+*(Switch thường (kể cả "Mở cửa sổ độc lập...") đều lưu chung toàn ứng dụng —
+đổi tài khoản ở BẤT KỲ cửa sổ nào cũng cập nhật state dùng chung đó, nên một
+cửa sổ bạn không hề đụng vào vẫn có thể bị đổi sang tài khoản khác ở lần đọc
+tiếp theo. Nếu có project bắt buộc phải luôn dùng đúng 1 tài khoản bất kể các
+cửa sổ khác làm gì, dùng **"Ghim thư mục này với 1 profile..."** trong menu —
+lưu riêng theo từng thư mục/workspace, không dùng chung với cửa sổ nào khác,
+và luôn trỏ thẳng vào thư mục riêng của profile đó (không bao giờ qua thư mục
+"live" dùng chung) nên hoàn toàn miễn nhiễm với switch ở nơi khác. Dùng **"Bỏ
+ghim thư mục này"** để quay lại dùng theo switch chung toàn ứng dụng.)*
+
 ## Current limitations
 
 - Developed and tested on **Windows** desktop VS Code. Nothing in the code is
