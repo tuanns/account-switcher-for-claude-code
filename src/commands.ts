@@ -1,18 +1,31 @@
 import * as vscode from 'vscode';
-import { getProfilesJsonPath, getLiveDir } from './paths';
+import * as path from 'path';
+import { getProfilesJsonPath, getLiveDir, getSharedMcpServersPath } from './paths';
 import { findProfile, listProfiles } from './profileStore';
 import { refreshProfilesAccountCache } from './accountCache';
 import { getActiveProfileId, setActiveProfileId, getIsPinned, setIsPinned } from './activeProfileState';
+import { getWorkspacePinnedProfileId, setWorkspacePinnedProfileId } from './workspacePin';
+import { resolveEffectiveProfile } from './effectiveProfile';
 import { applyProfileEnvironment } from './envApply';
 import { applyEnvironmentVariableCollection } from './envCollection';
 import { refreshStatusBar } from './statusBar';
-import { showMainMenu, showManageMenu, showPinMenu } from './quickPick';
+import { showMainMenu, showManageMenu, showPinMenu, showWorkspacePinMenu } from './quickPick';
 import { runAddProfileFlow } from './addProfileFlow';
 import { runRenameFlow, runRemoveFlow } from './manageProfilesFlow';
 import { swapCredentialsIntoLive } from './liveSwap';
 import { ensureAllDirsShared } from './sharedDirs';
+import { syncMcpServers } from './mcpServersSync';
 import { isCredentialsWiped } from './credentialsHealth';
 import { runReLoginFlow } from './reLoginFlow';
+
+/** Best-effort mcpServers sync (see mcpServersSync.ts) for `<dirPath>/.claude.json`. */
+function syncMcpServersFor(dirPath: string): void {
+  try {
+    syncMcpServers(path.join(dirPath, '.claude.json'), getSharedMcpServersPath());
+  } catch {
+    // Best-effort; a later activation/switch retries it.
+  }
+}
 
 let isBusy = false;
 
@@ -67,7 +80,12 @@ export function registerCommands(
         }
       }
 
-      const result = await showMainMenu(profiles, activeId);
+      const workspacePinnedId = getWorkspacePinnedProfileId(context);
+      const workspacePinnedProfile = workspacePinnedId
+        ? findProfile(profilesJsonPath, workspacePinnedId)
+        : undefined;
+
+      const result = await showMainMenu(profiles, activeId, workspacePinnedProfile);
       if (!result) {
         return;
       }
@@ -78,6 +96,13 @@ export function registerCommands(
         if (pinResult) {
           await switchPinned(context, statusBarItem, pinResult.profileId);
         }
+      } else if (result.kind === 'pinWorkspaceMenu') {
+        const pinResult = await showWorkspacePinMenu(profiles, workspacePinnedId);
+        if (pinResult) {
+          await switchWorkspacePinned(context, statusBarItem, pinResult.profileId);
+        }
+      } else if (result.kind === 'unpinWorkspace') {
+        await unpinWorkspace(context, statusBarItem);
       } else if (result.kind === 'add') {
         const activeProfile = activeId ? findProfile(profilesJsonPath, activeId) : undefined;
         const created = await runAddProfileFlow(context, activeProfile, getIsPinned(context));
@@ -120,7 +145,15 @@ async function handleManageMenu(
     refreshActiveDisplay(context, statusBarItem);
   } else if (result.kind === 'remove') {
     const activeId = getActiveProfileId(context);
+    const workspacePinnedId = getWorkspacePinnedProfileId(context);
     const { removed } = await runRemoveFlow(result.profileId);
+    if (removed && result.profileId === workspacePinnedId) {
+      // Don't leave this workspace pinned to a profile that no longer
+      // exists — `resolveEffectiveProfile` would already fall back
+      // gracefully, but clearing it here keeps the stored state honest and
+      // the menu's "pinned to X" label from ever naming a dead profile.
+      await setWorkspacePinnedProfileId(context, undefined);
+    }
     if (removed && result.profileId === activeId) {
       const remaining = listProfiles(profilesJsonPath);
       await switchLive(context, statusBarItem, remaining[0]?.id);
@@ -146,6 +179,12 @@ async function handleManageMenu(
  * new-conversation command itself — the currently open one is left alone
  * on purpose, in case the user wants to keep working in it under the old
  * account while future conversations use the new one.
+ *
+ * If this workspace has its own pin (see `switchWorkspacePinned`), invoking
+ * the plain switch menu from here is treated as the user opting this
+ * workspace back into the app-wide behavior, so the pin is cleared —
+ * otherwise the workspace pin would silently keep winning on next reload,
+ * contradicting the switch the user just made right now.
  */
 export async function switchLive(
   context: vscode.ExtensionContext,
@@ -164,7 +203,9 @@ export async function switchLive(
   } catch {
     // Best-effort; a later switch retries it.
   }
+  syncMcpServersFor(liveDir);
 
+  await setWorkspacePinnedProfileId(context, undefined);
   await setIsPinned(context, false);
   await setActiveProfileId(context, profile?.id);
   applyProfileEnvironment(profile ? { ...profile, dirPath: liveDir } : undefined);
@@ -187,6 +228,9 @@ export async function switchLive(
  * mechanism), so other windows/`_live` are unaffected. Since this is a
  * genuinely different directory, a running conversation can't pick it up in
  * place, so a new conversation is opened.
+ *
+ * Also clears any workspace pin for the same reason `switchLive` does — see
+ * its doc comment.
  */
 export async function switchPinned(
   context: vscode.ExtensionContext,
@@ -202,8 +246,10 @@ export async function switchPinned(
     } catch {
       // Best-effort; a later switch retries it.
     }
+    syncMcpServersFor(profile.dirPath);
   }
 
+  await setWorkspacePinnedProfileId(context, undefined);
   await setIsPinned(context, true);
   await setActiveProfileId(context, profile?.id);
   applyProfileEnvironment(profile);
@@ -223,6 +269,93 @@ export async function switchPinned(
 }
 
 /**
+ * Pins THIS WORKSPACE (folder) to a specific profile, stored in
+ * `context.workspaceState` — unlike `switchPinned` above (which is
+ * per-window but still backed by shared `globalState`, see
+ * `activeProfileState.ts`), this survives and stays isolated across every
+ * other window and every other switch made anywhere else: reopening this
+ * exact folder always resolves back to the pinned profile's own directory,
+ * regardless of what any other window's `activeProfileId`/`_live` currently
+ * point at (see `effectiveProfile.ts`).
+ */
+export async function switchWorkspacePinned(
+  context: vscode.ExtensionContext,
+  statusBarItem: vscode.StatusBarItem,
+  profileId: string | undefined
+): Promise<void> {
+  const profilesJsonPath = getProfilesJsonPath();
+  const profile = profileId ? findProfile(profilesJsonPath, profileId) : undefined;
+  if (!profile) {
+    return;
+  }
+
+  try {
+    ensureAllDirsShared(profile.dirPath);
+  } catch {
+    // Best-effort; a later switch retries it.
+  }
+  syncMcpServersFor(profile.dirPath);
+
+  await setWorkspacePinnedProfileId(context, profile.id);
+  applyProfileEnvironment(profile);
+  applyEnvironmentVariableCollection(context, profile);
+  refreshStatusBar(statusBarItem, profile, true);
+
+  try {
+    await vscode.commands.executeCommand('claude-vscode.newConversation');
+  } catch {
+    // Extension chinh thuc co the doi id lenh; switch env van thanh cong.
+  }
+  vscode.window.showInformationMessage(
+    vscode.l10n.t(
+      'This workspace is now pinned to "{0}" — switching accounts in any other window will never affect it. Opened a new conversation using this account.',
+      profile.name
+    )
+  );
+}
+
+/**
+ * Clears this workspace's pin and falls back to whatever the app-wide
+ * switch (`activeProfileId`/`isPinnedToOwnDir`) currently resolves to.
+ */
+export async function unpinWorkspace(
+  context: vscode.ExtensionContext,
+  statusBarItem: vscode.StatusBarItem
+): Promise<void> {
+  await setWorkspacePinnedProfileId(context, undefined);
+
+  const profilesJsonPath = getProfilesJsonPath();
+  const activeId = getActiveProfileId(context);
+  const resolved = resolveEffectiveProfile({
+    workspacePinnedId: undefined,
+    activeId,
+    isPinned: getIsPinned(context),
+    liveDir: getLiveDir(),
+    findProfile: (id) => findProfile(profilesJsonPath, id),
+  });
+  const effectiveProfile =
+    resolved.profile && resolved.dirPath ? { ...resolved.profile, dirPath: resolved.dirPath } : undefined;
+
+  if (effectiveProfile) {
+    syncMcpServersFor(effectiveProfile.dirPath);
+  }
+  applyProfileEnvironment(effectiveProfile);
+  applyEnvironmentVariableCollection(context, effectiveProfile);
+  refreshStatusBar(statusBarItem, resolved.profile, false);
+
+  if (effectiveProfile) {
+    try {
+      await vscode.commands.executeCommand('claude-vscode.newConversation');
+    } catch {
+      // Extension chinh thuc co the doi id lenh; switch env van thanh cong.
+    }
+  }
+  vscode.window.showInformationMessage(
+    vscode.l10n.t('This workspace no longer has its own pinned profile — it now follows the app-wide switch.')
+  );
+}
+
+/**
  * Reads `repository.url` straight from this extension's own manifest
  * (rather than hardcoding the GitHub URL a second time in source) and
  * normalizes it into something a browser can open: strips the `git+`
@@ -237,12 +370,39 @@ function getRepositoryUrl(context: vscode.ExtensionContext): string | undefined 
   return raw.replace(/^git\+/, '').replace(/\.git$/, '');
 }
 
+/**
+ * Re-resolves the effective profile for this window and applies it fully
+ * (env + status bar) — not just the status bar label. Called after any
+ * change that can shift what `resolveEffectiveProfile` resolves to without
+ * going through `switchLive`/`switchPinned`/`switchWorkspacePinned` (rename,
+ * and profile deletion in particular): a rename never changes the resolved
+ * `dirPath`, but deleting a workspace-pinned profile does — falling
+ * through from `source: 'workspace'` to whatever the app-wide switch
+ * resolves to. Only refreshing the status bar there would leave
+ * `CLAUDE_CONFIG_DIR`/`environmentVariableCollection` still pointed at the
+ * just-deleted profile's directory until the next reload or explicit
+ * switch.
+ */
 function refreshActiveDisplay(
   context: vscode.ExtensionContext,
   statusBarItem: vscode.StatusBarItem
 ): void {
   const profilesJsonPath = getProfilesJsonPath();
   const activeId = getActiveProfileId(context);
-  const profile = activeId ? findProfile(profilesJsonPath, activeId) : undefined;
-  refreshStatusBar(statusBarItem, profile);
+  const resolved = resolveEffectiveProfile({
+    workspacePinnedId: getWorkspacePinnedProfileId(context),
+    activeId,
+    isPinned: getIsPinned(context),
+    liveDir: getLiveDir(),
+    findProfile: (id) => findProfile(profilesJsonPath, id),
+  });
+  const effectiveProfile =
+    resolved.profile && resolved.dirPath ? { ...resolved.profile, dirPath: resolved.dirPath } : undefined;
+
+  if (effectiveProfile) {
+    syncMcpServersFor(effectiveProfile.dirPath);
+  }
+  applyProfileEnvironment(effectiveProfile);
+  applyEnvironmentVariableCollection(context, effectiveProfile);
+  refreshStatusBar(statusBarItem, resolved.profile, resolved.source === 'workspace');
 }

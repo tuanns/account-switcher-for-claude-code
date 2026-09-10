@@ -5,7 +5,7 @@ import { renderStatusBarText } from './statusBarText';
 export function createStatusBarItem(commandId: string): vscode.StatusBarItem {
   const item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
   item.command = commandId;
-  item.text = renderStatusBarText(undefined, vscode.l10n.t);
+  item.text = renderStatusBarText(undefined, false, vscode.l10n.t);
   item.tooltip = vscode.l10n.t('Switch Claude account');
   item.show();
   return item;
@@ -13,7 +13,8 @@ export function createStatusBarItem(commandId: string): vscode.StatusBarItem {
 
 export function refreshStatusBar(
   item: vscode.StatusBarItem,
-  activeProfile: ClaudeProfile | undefined
+  activeProfile: ClaudeProfile | undefined,
+  pinnedToWorkspace = false
 ): void {
-  item.text = renderStatusBarText(activeProfile, vscode.l10n.t);
+  item.text = renderStatusBarText(activeProfile, pinnedToWorkspace, vscode.l10n.t);
 }

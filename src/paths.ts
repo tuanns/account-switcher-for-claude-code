@@ -31,6 +31,16 @@ export function getSharedDir(name: string): string {
   return path.join(getProfilesRoot(), '_shared', name);
 }
 
+/**
+ * The canonical shared `mcpServers` registry — see `mcpServersSync.ts` for
+ * why this needs its own sync mechanism instead of the directory-junction
+ * trick `getSharedDir` uses: `mcpServers` is a key inside each profile's own
+ * `.claude.json` *file*, not a subdirectory, so it can't be symlinked away.
+ */
+export function getSharedMcpServersPath(): string {
+  return path.join(getProfilesRoot(), '_shared', 'mcpServers.json');
+}
+
 export function slugify(name: string): string {
   const slug = name
     .toLowerCase()

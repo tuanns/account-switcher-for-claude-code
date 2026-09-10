@@ -1,14 +1,18 @@
 import * as vscode from 'vscode';
-import { getProfilesJsonPath, getLiveDir } from './paths';
+import * as path from 'path';
+import { getProfilesJsonPath, getLiveDir, getSharedMcpServersPath } from './paths';
 import { findProfile } from './profileStore';
 import { tryFirstRunMigration } from './migration';
 import { getActiveProfileId, setActiveProfileId, getIsPinned } from './activeProfileState';
+import { getWorkspacePinnedProfileId } from './workspacePin';
+import { resolveEffectiveProfile } from './effectiveProfile';
 import { applyProfileEnvironment } from './envApply';
 import { applyEnvironmentVariableCollection } from './envCollection';
 import { createStatusBarItem, refreshStatusBar } from './statusBar';
 import { registerCommands } from './commands';
 import { swapCredentialsIntoLive } from './liveSwap';
 import { ensureAllDirsShared } from './sharedDirs';
+import { syncMcpServers } from './mcpServersSync';
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const profilesJsonPath = getProfilesJsonPath();
@@ -32,10 +36,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }
   }
 
-  const isPinned = getIsPinned(context);
-  const effectiveProfile = activeProfile
-    ? { ...activeProfile, dirPath: isPinned ? activeProfile.dirPath : getLiveDir() }
-    : undefined;
+  const resolved = resolveEffectiveProfile({
+    workspacePinnedId: getWorkspacePinnedProfileId(context),
+    activeId: activeProfile?.id,
+    isPinned: getIsPinned(context),
+    liveDir: getLiveDir(),
+    findProfile: (id) => findProfile(profilesJsonPath, id),
+  });
+  const effectiveProfile =
+    resolved.profile && resolved.dirPath ? { ...resolved.profile, dirPath: resolved.dirPath } : undefined;
 
   if (effectiveProfile) {
     // Lazily upgrade this directory's projects/plugins/skills to shared
@@ -48,13 +57,21 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     } catch {
       // Best-effort; a later switch retries it.
     }
+    // mcpServers can't be junctioned away like projects/plugins/skills
+    // above (it's a key inside .claude.json, not a subdirectory) — sync it
+    // into/out of the shared registry instead. See mcpServersSync.ts.
+    try {
+      syncMcpServers(path.join(effectiveProfile.dirPath, '.claude.json'), getSharedMcpServersPath());
+    } catch {
+      // Best-effort; a later activation/switch retries it.
+    }
   }
 
   applyProfileEnvironment(effectiveProfile);
   applyEnvironmentVariableCollection(context, effectiveProfile);
 
   const statusBarItem = createStatusBarItem('profileSwitcherForClaudeCode.openMenu');
-  refreshStatusBar(statusBarItem, activeProfile);
+  refreshStatusBar(statusBarItem, resolved.profile, resolved.source === 'workspace');
   context.subscriptions.push(statusBarItem);
 
   registerCommands(context, statusBarItem);

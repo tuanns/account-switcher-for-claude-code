@@ -4,6 +4,8 @@ import type { ClaudeProfile } from './profileStore';
 export type MainMenuResult =
   | { kind: 'switchLive'; profileId: string }
   | { kind: 'pinMenu' }
+  | { kind: 'pinWorkspaceMenu' }
+  | { kind: 'unpinWorkspace' }
   | { kind: 'add' }
   | { kind: 'manage' }
   | { kind: 'openGithub' }
@@ -15,7 +17,8 @@ interface MenuItem extends vscode.QuickPickItem {
 
 export async function showMainMenu(
   profiles: ClaudeProfile[],
-  activeProfileId: string | undefined
+  activeProfileId: string | undefined,
+  workspacePinnedProfile: ClaudeProfile | undefined
 ): Promise<MainMenuResult> {
   const items: MenuItem[] = profiles.map((p) => ({
     label: p.id === activeProfileId ? `$(check) ${p.name}` : p.name,
@@ -29,6 +32,29 @@ export async function showMainMenu(
     ),
     action: { kind: 'pinMenu' },
   });
+  if (workspacePinnedProfile) {
+    items.push({
+      label: vscode.l10n.t('$(pinned) Change this workspace\'s pinned profile...'),
+      detail: vscode.l10n.t(
+        'Currently pinned to "{0}" — this folder ignores account switches made in other windows',
+        workspacePinnedProfile.name
+      ),
+      action: { kind: 'pinWorkspaceMenu' },
+    });
+    items.push({
+      label: vscode.l10n.t('$(pin) Unpin this workspace'),
+      detail: vscode.l10n.t('Go back to following the app-wide account switch'),
+      action: { kind: 'unpinWorkspace' },
+    });
+  } else {
+    items.push({
+      label: vscode.l10n.t('$(pin) Pin this workspace to a profile...'),
+      detail: vscode.l10n.t(
+        'This folder always uses the chosen profile, even when another window switches accounts'
+      ),
+      action: { kind: 'pinWorkspaceMenu' },
+    });
+  }
   items.push({ label: vscode.l10n.t('$(add) Add a new account...'), action: { kind: 'add' } });
   items.push({ label: vscode.l10n.t('$(gear) Manage profiles...'), action: { kind: 'manage' } });
   items.push({ label: vscode.l10n.t('$(github) View source on GitHub'), action: { kind: 'openGithub' } });
@@ -56,6 +82,29 @@ export async function showPinMenu(
   }));
   const picked = await vscode.window.showQuickPick(items, {
     placeHolder: vscode.l10n.t('Which profile should this window use exclusively? (opens a new conversation)'),
+  });
+  return picked?.action;
+}
+
+export type WorkspacePinMenuResult = { kind: 'switchWorkspacePinned'; profileId: string } | undefined;
+
+interface WorkspacePinMenuItem extends vscode.QuickPickItem {
+  action: WorkspacePinMenuResult;
+}
+
+export async function showWorkspacePinMenu(
+  profiles: ClaudeProfile[],
+  workspacePinnedProfileId: string | undefined
+): Promise<WorkspacePinMenuResult> {
+  const items: WorkspacePinMenuItem[] = profiles.map((p) => ({
+    label: p.id === workspacePinnedProfileId ? `$(check) ${p.name}` : p.name,
+    description: p.email ?? p.dirPath,
+    action: { kind: 'switchWorkspacePinned', profileId: p.id },
+  }));
+  const picked = await vscode.window.showQuickPick(items, {
+    placeHolder: vscode.l10n.t(
+      'Which profile should THIS WORKSPACE always use? (opens a new conversation)'
+    ),
   });
   return picked?.action;
 }

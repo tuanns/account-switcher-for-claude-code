@@ -30,5 +30,15 @@
   "\"{0}\"'s login session was lost (its token got cleared) — log in again to keep using it.": "Phiên đăng nhập của \"{0}\" đã mất (token bị xoá) — đăng nhập lại để tiếp tục dùng.",
   "Claude Login: {0}": "Đăng nhập Claude: {0}",
   "Logged in again for \"{0}\".": "Đã đăng nhập lại cho \"{0}\".",
-  "$(github) View source on GitHub": "$(github) Xem mã nguồn trên GitHub"
+  "$(github) View source on GitHub": "$(github) Xem mã nguồn trên GitHub",
+  "$(pinned) Change this workspace's pinned profile...": "$(pinned) Đổi profile ghim cho thư mục này...",
+  "Currently pinned to \"{0}\" — this folder ignores account switches made in other windows": "Đang ghim với \"{0}\" — thư mục này không bị ảnh hưởng bởi việc đổi tài khoản ở cửa sổ khác",
+  "$(pin) Unpin this workspace": "$(pin) Bỏ ghim thư mục này",
+  "Go back to following the app-wide account switch": "Quay lại dùng theo tài khoản chuyển đổi chung toàn ứng dụng",
+  "$(pin) Pin this workspace to a profile...": "$(pin) Ghim thư mục này với 1 profile...",
+  "This folder always uses the chosen profile, even when another window switches accounts": "Thư mục này luôn dùng profile đã chọn, kể cả khi cửa sổ khác đổi tài khoản",
+  "Which profile should THIS WORKSPACE always use? (opens a new conversation)": "THƯ MỤC NÀY sẽ luôn dùng profile nào? (sẽ mở conversation mới)",
+  "This workspace is now pinned to \"{0}\" — switching accounts in any other window will never affect it. Opened a new conversation using this account.": "Thư mục này giờ đã ghim với \"{0}\" — đổi tài khoản ở bất kỳ cửa sổ nào khác sẽ không ảnh hưởng đến nó. Đã mở conversation mới dùng tài khoản này.",
+  "This workspace no longer has its own pinned profile — it now follows the app-wide switch.": "Thư mục này không còn ghim profile riêng nữa — giờ sẽ dùng theo tài khoản chuyển đổi chung toàn ứng dụng.",
+  "$(pinned) Claude: {0} (this workspace)": "$(pinned) Claude: {0} (thư mục này)"
 }
