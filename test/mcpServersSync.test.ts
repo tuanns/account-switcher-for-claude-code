@@ -84,6 +84,25 @@ test('syncMcpServers: no-ops when the profile\'s .claude.json does not exist yet
   assert.equal(fs.existsSync(claudeJsonPath), false);
 });
 
+test('syncMcpServers: does not clobber .claude.json when it is unreadable at write-back time', () => {
+  // Regression test: readJsonObject used to back the write-back path too,
+  // silently treating a parse failure as `{}` - so a .claude.json caught
+  // mid-write by a running `claude` conversation got overwritten with just
+  // `{mcpServers: merged}`, discarding projects/oauthAccount/everything else.
+  const claudeJsonPath = path.join(tempDir('cps-mcp-'), '.claude.json');
+  // Malformed on purpose: simulates a partial/concurrent write, not a
+  // missing file (existsSync must still be true going into the write-back).
+  fs.writeFileSync(claudeJsonPath, '{"projects": {"foo": {}}, "oauthAcc', 'utf8');
+  const sharedJsonPath = path.join(tempDir('cps-mcp-shared-'), 'mcpServers.json');
+  fs.mkdirSync(path.dirname(sharedJsonPath), { recursive: true });
+  fs.writeFileSync(sharedJsonPath, JSON.stringify({ shared: { command: 'x' } }), 'utf8');
+
+  syncMcpServers(claudeJsonPath, sharedJsonPath);
+
+  // Untouched - still the same malformed bytes, not silently replaced.
+  assert.equal(fs.readFileSync(claudeJsonPath, 'utf8'), '{"projects": {"foo": {}}, "oauthAcc');
+});
+
 test('syncMcpServers: no-ops entirely when neither side has any server yet', () => {
   const claudeJsonPath = path.join(tempDir('cps-mcp-'), '.claude.json');
   fs.writeFileSync(claudeJsonPath, JSON.stringify({ projects: {} }), 'utf8');

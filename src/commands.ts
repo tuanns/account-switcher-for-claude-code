@@ -370,6 +370,19 @@ function getRepositoryUrl(context: vscode.ExtensionContext): string | undefined 
   return raw.replace(/^git\+/, '').replace(/\.git$/, '');
 }
 
+/**
+ * Re-resolves the effective profile for this window and applies it fully
+ * (env + status bar) — not just the status bar label. Called after any
+ * change that can shift what `resolveEffectiveProfile` resolves to without
+ * going through `switchLive`/`switchPinned`/`switchWorkspacePinned` (rename,
+ * and profile deletion in particular): a rename never changes the resolved
+ * `dirPath`, but deleting a workspace-pinned profile does — falling
+ * through from `source: 'workspace'` to whatever the app-wide switch
+ * resolves to. Only refreshing the status bar there would leave
+ * `CLAUDE_CONFIG_DIR`/`environmentVariableCollection` still pointed at the
+ * just-deleted profile's directory until the next reload or explicit
+ * switch.
+ */
 function refreshActiveDisplay(
   context: vscode.ExtensionContext,
   statusBarItem: vscode.StatusBarItem
@@ -383,5 +396,13 @@ function refreshActiveDisplay(
     liveDir: getLiveDir(),
     findProfile: (id) => findProfile(profilesJsonPath, id),
   });
+  const effectiveProfile =
+    resolved.profile && resolved.dirPath ? { ...resolved.profile, dirPath: resolved.dirPath } : undefined;
+
+  if (effectiveProfile) {
+    syncMcpServersFor(effectiveProfile.dirPath);
+  }
+  applyProfileEnvironment(effectiveProfile);
+  applyEnvironmentVariableCollection(context, effectiveProfile);
   refreshStatusBar(statusBarItem, resolved.profile, resolved.source === 'workspace');
 }

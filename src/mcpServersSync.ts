@@ -12,6 +12,23 @@ function readJsonObject(filePath: string): Record<string, unknown> {
   }
 }
 
+/**
+ * Like `readJsonObject`, but distinguishes "unreadable/corrupt right now"
+ * (returns `undefined`) from "genuinely an empty/absent object" (`{}`) —
+ * needed wherever the result is about to be written *back*, since silently
+ * treating a parse failure as `{}` there would overwrite the file with a
+ * fresh object, discarding everything else in it (`projects`, `oauthAccount`,
+ * ...) instead of just failing to sync this one time.
+ */
+function readJsonObjectForWriteBack(filePath: string): Record<string, unknown> | undefined {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    return parsed && typeof parsed === 'object' ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Reads the `mcpServers` key nested inside a real `.claude.json`. */
 function readMcpServers(claudeJsonPath: string): McpServerMap {
   const mcpServers = readJsonObject(claudeJsonPath).mcpServers;
@@ -80,7 +97,15 @@ export function syncMcpServers(claudeJsonPath: string, sharedJsonPath: string): 
   if (!fs.existsSync(claudeJsonPath)) {
     return;
   }
-  const parsed = readJsonObject(claudeJsonPath);
+  const parsed = readJsonObjectForWriteBack(claudeJsonPath);
+  if (!parsed) {
+    // Unreadable/corrupt right now — most likely caught mid-write by a
+    // running `claude` conversation (liveSwap.ts documents this same file
+    // as actively written elsewhere). Skip this write-back rather than
+    // risk clobbering the file with a fresh object; a later
+    // activation/switch retries.
+    return;
+  }
   parsed.mcpServers = merged;
   fs.writeFileSync(claudeJsonPath, JSON.stringify(parsed, null, 2), 'utf8');
 }

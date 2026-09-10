@@ -130,6 +130,12 @@ ghim thư mục này"** để quay lại dùng theo switch chung toàn ứng d�
   extension's own file operations trigger (they never write to a profile's
   own `.credentials.json`, only to the shared `_live` copy). If it happens,
   just log in again for that profile's directory.
+- **`mcpServers` syncing only ever adds, never removes.** If you remove an
+  MCP server from one profile (hand-edit, `claude mcp remove`, ...), it
+  reappears the next time any profile activates or switches, pulled back in
+  from the shared registry (`~/.claude-profiles/_shared/mcpServers.json`).
+  To actually delete one for good, remove it from that shared file directly
+  — removing it from just a profile's own `.claude.json` isn't enough.
 
 *(Được phát triển và test trên Windows desktop VSCode. Code không có gì
 Windows-riêng (path dùng `path.join`, nhánh OS đã xử lý đúng `which`/`where`,
@@ -140,7 +146,10 @@ Cứ thử và báo lại nếu có gì bất thường. Phụ thuộc hành vi 
 document của extension "Claude Code" chính thức — có thể ngừng hoạt động
 nếu Anthropic đổi cách spawn ở bản mới. Tránh dùng cùng 1 profile từ 2 tiến
 trình cùng lúc — dễ gây race lúc refresh token, có thể làm credentials bị
-ghi trắng, phải đăng nhập lại.)*
+ghi trắng, phải đăng nhập lại. Đồng bộ `mcpServers` chỉ CỘNG THÊM, không bao
+giờ xoá — xoá 1 MCP server ở 1 profile sẽ bị nạp lại từ registry dùng chung
+(`~/.claude-profiles/_shared/mcpServers.json`) lần activate/switch kế tiếp;
+muốn xoá hẳn phải sửa trực tiếp file registry đó.)*
 
 ## Build & install locally
 
