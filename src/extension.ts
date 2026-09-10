@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { getProfilesJsonPath, getLiveDir } from './paths';
+import * as path from 'path';
+import { getProfilesJsonPath, getLiveDir, getSharedMcpServersPath } from './paths';
 import { findProfile } from './profileStore';
 import { tryFirstRunMigration } from './migration';
 import { getActiveProfileId, setActiveProfileId, getIsPinned } from './activeProfileState';
@@ -11,6 +12,7 @@ import { createStatusBarItem, refreshStatusBar } from './statusBar';
 import { registerCommands } from './commands';
 import { swapCredentialsIntoLive } from './liveSwap';
 import { ensureAllDirsShared } from './sharedDirs';
+import { syncMcpServers } from './mcpServersSync';
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const profilesJsonPath = getProfilesJsonPath();
@@ -54,6 +56,14 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       ensureAllDirsShared(effectiveProfile.dirPath);
     } catch {
       // Best-effort; a later switch retries it.
+    }
+    // mcpServers can't be junctioned away like projects/plugins/skills
+    // above (it's a key inside .claude.json, not a subdirectory) — sync it
+    // into/out of the shared registry instead. See mcpServersSync.ts.
+    try {
+      syncMcpServers(path.join(effectiveProfile.dirPath, '.claude.json'), getSharedMcpServersPath());
+    } catch {
+      // Best-effort; a later activation/switch retries it.
     }
   }
 

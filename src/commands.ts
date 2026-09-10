@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { getProfilesJsonPath, getLiveDir } from './paths';
+import * as path from 'path';
+import { getProfilesJsonPath, getLiveDir, getSharedMcpServersPath } from './paths';
 import { findProfile, listProfiles } from './profileStore';
 import { refreshProfilesAccountCache } from './accountCache';
 import { getActiveProfileId, setActiveProfileId, getIsPinned, setIsPinned } from './activeProfileState';
@@ -13,8 +14,18 @@ import { runAddProfileFlow } from './addProfileFlow';
 import { runRenameFlow, runRemoveFlow } from './manageProfilesFlow';
 import { swapCredentialsIntoLive } from './liveSwap';
 import { ensureAllDirsShared } from './sharedDirs';
+import { syncMcpServers } from './mcpServersSync';
 import { isCredentialsWiped } from './credentialsHealth';
 import { runReLoginFlow } from './reLoginFlow';
+
+/** Best-effort mcpServers sync (see mcpServersSync.ts) for `<dirPath>/.claude.json`. */
+function syncMcpServersFor(dirPath: string): void {
+  try {
+    syncMcpServers(path.join(dirPath, '.claude.json'), getSharedMcpServersPath());
+  } catch {
+    // Best-effort; a later activation/switch retries it.
+  }
+}
 
 let isBusy = false;
 
@@ -192,6 +203,7 @@ export async function switchLive(
   } catch {
     // Best-effort; a later switch retries it.
   }
+  syncMcpServersFor(liveDir);
 
   await setWorkspacePinnedProfileId(context, undefined);
   await setIsPinned(context, false);
@@ -234,6 +246,7 @@ export async function switchPinned(
     } catch {
       // Best-effort; a later switch retries it.
     }
+    syncMcpServersFor(profile.dirPath);
   }
 
   await setWorkspacePinnedProfileId(context, undefined);
@@ -281,6 +294,7 @@ export async function switchWorkspacePinned(
   } catch {
     // Best-effort; a later switch retries it.
   }
+  syncMcpServersFor(profile.dirPath);
 
   await setWorkspacePinnedProfileId(context, profile.id);
   applyProfileEnvironment(profile);
@@ -322,6 +336,9 @@ export async function unpinWorkspace(
   const effectiveProfile =
     resolved.profile && resolved.dirPath ? { ...resolved.profile, dirPath: resolved.dirPath } : undefined;
 
+  if (effectiveProfile) {
+    syncMcpServersFor(effectiveProfile.dirPath);
+  }
   applyProfileEnvironment(effectiveProfile);
   applyEnvironmentVariableCollection(context, effectiveProfile);
   refreshStatusBar(statusBarItem, resolved.profile, false);

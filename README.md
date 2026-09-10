@@ -65,13 +65,23 @@ dùng "Mở cửa sổ độc lập..." ở mỗi cửa sổ. 5. Dùng VSCode Pr
 Profile tự nhớ riêng một tài khoản Claude.)*
 
 All profiles share the same `projects/` (conversation/session history),
-`plugins/`, and `skills/` — switching accounts never loses a project's
-session history, installed plugins, or installed skills. Only credentials
-and account identity stay per-profile.
+`plugins/`, `skills/`, and `mcpServers` — switching accounts never loses a
+project's session history, installed plugins/skills, or configured MCP
+servers. Only credentials and account identity stay per-profile.
+`mcpServers` isn't a directory like the other three, so it can't be
+symlinked away the same way — instead, every profile syncs with a shared
+registry (`~/.claude-profiles/_shared/mcpServers.json`) each time it
+activates or you switch into it: a server added under any one profile
+eventually shows up under all the others too.
 
-*(Mọi profile dùng chung `projects/`, `plugins/`, `skills/` — đổi tài khoản
-không làm mất session cũ, plugin hay skill đã cài của bất kỳ project nào.
-Chỉ credentials và danh tính tài khoản là riêng theo từng profile.)*
+*(Mọi profile dùng chung `projects/`, `plugins/`, `skills/`, và
+`mcpServers` — đổi tài khoản không làm mất session cũ, plugin/skill đã cài,
+hay MCP server đã cấu hình của bất kỳ profile nào. Chỉ credentials và danh
+tính tài khoản là riêng theo từng profile. `mcpServers` không phải thư mục
+như 3 mục kia nên không symlink được — mỗi profile tự đồng bộ với 1 registry
+dùng chung (`~/.claude-profiles/_shared/mcpServers.json`) mỗi khi activate
+hoặc switch vào — thêm server ở profile nào rồi cũng sẽ xuất hiện ở mọi
+profile khác.)*
 
 ### Pinning a specific workspace to an account
 
