@@ -57,8 +57,13 @@ test('tryFirstRunMigration shares claudeDir\'s own projects/plugins/skills, not 
   );
 
   const sharedRoot = tempDir('cps-shared-root-');
-  const result = tryFirstRunMigration(profilesJsonPath, claudeDir, (name) =>
-    path.join(sharedRoot, name)
+  // No legacy sibling on this run — isolates the test from whatever
+  // `~/.claude.json` happens to exist on the machine actually running it.
+  const result = tryFirstRunMigration(
+    profilesJsonPath,
+    claudeDir,
+    (name) => path.join(sharedRoot, name),
+    path.join(tempDir('cps-no-legacy-'), '.claude.json')
   );
 
   assert.ok(result);
@@ -76,6 +81,61 @@ test('tryFirstRunMigration shares claudeDir\'s own projects/plugins/skills, not 
     ),
     '{"pre-existing":"session"}'
   );
+});
+
+test('tryFirstRunMigration seeds <claudeDir>/.claude.json from the legacy ~/.claude.json sibling when missing', () => {
+  // Regression test: the pre-CLAUDE_CONFIG_DIR-era Claude Code CLI keeps its
+  // top-level JSON config (mcpServers, projects map, oauthAccount, ...) at a
+  // sibling `~/.claude.json`, not nested inside `~/.claude/`. Migration used
+  // to look ONLY at `<claudeDir>/.claude.json`, which never existed for a
+  // pre-existing install, silently losing the user's mcpServers/settings.
+  const profilesJsonPath = path.join(tempDir('cps-mig-'), 'profiles.json');
+  const claudeDir = tempDir('cps-claude-');
+  fs.writeFileSync(path.join(claudeDir, '.credentials.json'), '{}', 'utf8');
+  // Deliberately no <claudeDir>/.claude.json — only the legacy sibling.
+  const legacyConfigPath = path.join(tempDir('cps-legacy-'), '.claude.json');
+  fs.writeFileSync(
+    legacyConfigPath,
+    JSON.stringify({
+      oauthAccount: { emailAddress: 'me@example.com', organizationName: 'Acme' },
+      mcpServers: { mssql: { type: 'stdio', command: 'node', args: ['index.js'] } },
+    }),
+    'utf8'
+  );
+
+  const sharedRoot = tempDir('cps-shared-root-');
+  const result = tryFirstRunMigration(
+    profilesJsonPath,
+    claudeDir,
+    (name) => path.join(sharedRoot, name),
+    legacyConfigPath
+  );
+
+  assert.ok(result);
+  assert.equal(result?.email, 'me@example.com');
+  const seeded = JSON.parse(fs.readFileSync(path.join(claudeDir, '.claude.json'), 'utf8'));
+  assert.deepEqual(seeded.mcpServers, {
+    mssql: { type: 'stdio', command: 'node', args: ['index.js'] },
+  });
+});
+
+test('tryFirstRunMigration leaves an existing <claudeDir>/.claude.json alone (does not overwrite with the legacy sibling)', () => {
+  const profilesJsonPath = path.join(tempDir('cps-mig-'), 'profiles.json');
+  const claudeDir = tempDir('cps-claude-');
+  fs.writeFileSync(path.join(claudeDir, '.credentials.json'), '{}', 'utf8');
+  fs.writeFileSync(
+    path.join(claudeDir, '.claude.json'),
+    JSON.stringify({ mcpServers: { real: {} } }),
+    'utf8'
+  );
+  const legacyConfigPath = path.join(tempDir('cps-legacy-'), '.claude.json');
+  fs.writeFileSync(legacyConfigPath, JSON.stringify({ mcpServers: { stale: {} } }), 'utf8');
+
+  const sharedRoot = tempDir('cps-shared-root-');
+  tryFirstRunMigration(profilesJsonPath, claudeDir, (name) => path.join(sharedRoot, name), legacyConfigPath);
+
+  const stillThere = JSON.parse(fs.readFileSync(path.join(claudeDir, '.claude.json'), 'utf8'));
+  assert.deepEqual(stillThere.mcpServers, { real: {} });
 });
 
 test('tryFirstRunMigration skips when a profile already exists', () => {
