@@ -9,7 +9,7 @@ import { resolveEffectiveProfile } from './effectiveProfile';
 import { applyProfileEnvironment } from './envApply';
 import { applyEnvironmentVariableCollection } from './envCollection';
 import { createStatusBarItem, refreshStatusBar } from './statusBar';
-import { registerCommands } from './commands';
+import { registerCommands, saveLiveCredentialsToActiveProfile } from './commands';
 import { swapCredentialsIntoLive } from './liveSwap';
 import { ensureAllDirsShared } from './sharedDirs';
 import { syncMcpServers } from './mcpServersSync';
@@ -35,6 +35,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       }
     }
   }
+
+  // Token rotated by the CLI in the previous session lives only in `_live`
+  // until the next switch; save it now so the profile's own copy isn't stale.
+  saveLiveCredentialsToActiveProfile(context, profilesJsonPath, getLiveDir());
 
   const resolved = resolveEffectiveProfile({
     workspacePinnedId: getWorkspacePinnedProfileId(context),

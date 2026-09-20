@@ -56,3 +56,50 @@ export function swapCredentialsIntoLive(sourceDir: string, liveDir: string): voi
   liveConfig.oauthAccount = sourceOAuthAccount;
   fs.writeFileSync(liveConfigPath, JSON.stringify(liveConfig, null, 2), 'utf8');
 }
+
+function readExpiresAt(credentialsPath: string): number | undefined {
+  try {
+    const raw = JSON.parse(fs.readFileSync(credentialsPath, 'utf8'));
+    const value = (raw?.claudeAiOauth ?? raw)?.expiresAt;
+    return typeof value === 'number' ? value : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Copies `<liveDir>/.credentials.json` back into the profile being left.
+ * OAuth refresh tokens rotate and the running CLI refreshes them inside
+ * `_live`, so without this the outgoing profile keeps a dead refresh token.
+ * Skipped unless live tokens are non-empty and both emails are known and
+ * match, and skipped when the profile's own copy is newer (e.g. it was just
+ * re-logged-in, or refreshed by a window pinned to its own directory).
+ */
+export function writeBackLiveCredentials(outgoingDir: string, outgoingEmail: string | undefined, liveDir: string): boolean {
+  try {
+    const liveCredentialsPath = path.join(liveDir, '.credentials.json');
+    const liveContent = fs.readFileSync(liveCredentialsPath, 'utf8');
+    const raw = JSON.parse(liveContent);
+    const tokens = raw?.claudeAiOauth ?? raw;
+    if (!tokens?.accessToken || !tokens?.refreshToken) {
+      return false;
+    }
+    const liveConfig = JSON.parse(fs.readFileSync(path.join(liveDir, '.claude.json'), 'utf8'));
+    const liveEmail: unknown = liveConfig?.oauthAccount?.emailAddress;
+    if (!outgoingEmail || typeof liveEmail !== 'string' || outgoingEmail.toLowerCase() !== liveEmail.toLowerCase()) {
+      return false;
+    }
+    const outgoingCredentialsPath = path.join(outgoingDir, '.credentials.json');
+    const liveExpiresAt = readExpiresAt(liveCredentialsPath);
+    const outgoingExpiresAt = readExpiresAt(outgoingCredentialsPath);
+    if (liveExpiresAt !== undefined && outgoingExpiresAt !== undefined && liveExpiresAt < outgoingExpiresAt) {
+      return false;
+    }
+    const tmpPath = `${outgoingCredentialsPath}.tmp`;
+    fs.writeFileSync(tmpPath, liveContent, 'utf8');
+    fs.renameSync(tmpPath, outgoingCredentialsPath);
+    return true;
+  } catch {
+    return false;
+  }
+}

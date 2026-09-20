@@ -12,7 +12,7 @@ import { refreshStatusBar } from './statusBar';
 import { showMainMenu, showManageMenu, showPinMenu, showWorkspacePinMenu } from './quickPick';
 import { runAddProfileFlow } from './addProfileFlow';
 import { runRenameFlow, runRemoveFlow } from './manageProfilesFlow';
-import { swapCredentialsIntoLive } from './liveSwap';
+import { swapCredentialsIntoLive, writeBackLiveCredentials } from './liveSwap';
 import { ensureAllDirsShared } from './sharedDirs';
 import { syncMcpServers } from './mcpServersSync';
 import { isCredentialsWiped } from './credentialsHealth';
@@ -24,6 +24,26 @@ function syncMcpServersFor(dirPath: string): void {
     syncMcpServers(path.join(dirPath, '.claude.json'), getSharedMcpServersPath());
   } catch {
     // Best-effort; a later activation/switch retries it.
+  }
+}
+
+/**
+ * While unpinned, `_live` belongs to the active profile and the CLI rotates
+ * its refresh token there — save it back before `_live` is overwritten or
+ * abandoned, or the profile's own copy goes stale (forcing a re-login).
+ */
+export function saveLiveCredentialsToActiveProfile(
+  context: vscode.ExtensionContext,
+  profilesJsonPath: string,
+  liveDir: string
+): void {
+  if (getIsPinned(context)) {
+    return;
+  }
+  const activeId = getActiveProfileId(context);
+  const active = activeId ? findProfile(profilesJsonPath, activeId) : undefined;
+  if (active) {
+    writeBackLiveCredentials(active.dirPath, active.email, liveDir);
   }
 }
 
@@ -75,7 +95,15 @@ export function registerCommands(
         );
         if (choice === reLoginLabel) {
           const activeProfile = activeId ? findProfile(profilesJsonPath, activeId) : undefined;
-          await runReLoginFlow(context, wiped, activeProfile, getIsPinned(context));
+          const loggedIn = await runReLoginFlow(context, wiped, activeProfile, getIsPinned(context));
+          if (loggedIn && !getIsPinned(context) && wiped.id === activeId) {
+            // `_live` still holds the dead credentials; carry the fresh login over.
+            try {
+              swapCredentialsIntoLive(wiped.dirPath, getLiveDir());
+            } catch {
+              // Best-effort; the next switch retries it.
+            }
+          }
           return;
         }
       }
@@ -195,6 +223,7 @@ export async function switchLive(
   const profile = profileId ? findProfile(profilesJsonPath, profileId) : undefined;
   const liveDir = getLiveDir();
 
+  saveLiveCredentialsToActiveProfile(context, profilesJsonPath, liveDir);
   if (profile) {
     swapCredentialsIntoLive(profile.dirPath, liveDir);
   }
@@ -240,6 +269,7 @@ export async function switchPinned(
   const profilesJsonPath = getProfilesJsonPath();
   const profile = profileId ? findProfile(profilesJsonPath, profileId) : undefined;
 
+  saveLiveCredentialsToActiveProfile(context, profilesJsonPath, getLiveDir());
   if (profile) {
     try {
       ensureAllDirsShared(profile.dirPath);
